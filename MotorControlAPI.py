@@ -43,7 +43,7 @@ class MotorController:
     #Tells both motors to go forward (the direction of the small wheels)
     # speed takes values between 0-100 (0 being stopped, 100 being full speed)
     def forward(self, speed):
-        if (speed < 0 or (not speed.isnumeric())):
+        if (speed < 0):
             exit()
 
         print("forward")
@@ -60,7 +60,7 @@ class MotorController:
     #Tells both motors to go backwards (the direction of the big wheels)
     # speed takes values between 0-100 (0 being stopped, 100 being full speed)
     def backward(self, speed):
-        if (speed < 0 or (not speed.isnumeric())):
+        if (speed < 0):
             exit()
         
         motorCommandString1 = "!G 1 "
@@ -75,7 +75,7 @@ class MotorController:
     #Turns the robot to the left, resulting in the right wheel turning and the left wheel stationary
     # speed takes values between 0-100 (0 being stopped, 100 being full speed)
     def turnLeft(self, speed):
-        if (speed < 0 or (not speed.isnumeric())):
+        if (speed < 0):
             exit()
         
         motorCommandString1 = "!G 1 "
@@ -90,7 +90,7 @@ class MotorController:
     #Turns the robot to the right, resulting in the left wheel turning and the right wheel stationary
     # speed takes values between 0-100 (0 being stopped, 100 being full speed)
     def turnRIght(self, speed):
-        if (speed < 0 or (not speed.isnumeric())):
+        if (speed < 0):
             exit()
         
         motorCommandString1 = "!G 1 "
