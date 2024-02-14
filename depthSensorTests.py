@@ -1,10 +1,13 @@
 """
 Obstacle avoidance tests using depth sensor.
 
+Download Python ZED SDK by following this tutorial: https://www.stereolabs.com/docs/app-development/python/install
+
 Authors: Harrison Bui
 Date: February 13, 2024
 """
 
+from MotorControlAPI import MotorController
 import pyzed.sl as sl
 import math
 
@@ -22,8 +25,8 @@ def clipData(data_to_fix, lower_bound, upper_bound):
     to the closest bound value. Function is used to clean up noise in depth sensor data.
 
     :param data_to_fix: float value to recompute from
-    :param lower_bound: the lowest acceptable value for value
-    :param upper_bound: the highest acceptable value for value
+    :param lower_bound: the lowest value acceptable for value
+    :param upper_bound: the highest value acceptable for value
 
     :return: the updated data value as a float
     """
@@ -77,7 +80,8 @@ def moveForwardAndStopTest():
     """
     Does a test run where the robot moves forward and stops when it gets close enough to an obstacle.
     """
-    # creates a ZED camera
+    # initialization
+    motor = MotorController('COMx')  # update depending on system
     zed = sl.Camera()
     init_params = sl.InitParameters()
     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
@@ -90,8 +94,8 @@ def moveForwardAndStopTest():
         exit(1)
 
     # moves robot forward
-    # TODO: replace with James' API
-    print("Moving forward")
+    motor.forward(25)
+    print("Robot moving forward")
 
     # initialization for using sensor data
     leftImage = sl.Mat()
@@ -121,10 +125,11 @@ def moveForwardAndStopTest():
             print("Failed to grab image. Error:", error)
 
     # stops robot
-    # TODO: replace with James' API
-    print("Stopped")
+    motor.stop()
+    print("Robot has stopped")
 
-    # closes the camera
+    # cleanup
+    motor.shutDown()
     zed.close()
 
 
