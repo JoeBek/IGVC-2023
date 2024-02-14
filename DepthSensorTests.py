@@ -113,6 +113,7 @@ def captureImagesUntilCloseToObstacle(zed):
             else:
                 x, y = obstacleCoordinates
             err, depthValue = leftDepthMatrix.get_value(x, y)
+            depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
             print("Distance from camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
         else:
             print("Failed to grab image. Error:", error)
@@ -146,6 +147,7 @@ def captureImagesUntilClear(zed):
             else:
                 x, y = obstacleCoordinates
             err, depthValue = leftDepthMatrix.get_value(x, y)
+            depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
             print("Distance from camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
         else:
             print("Failed to grab image. Error:", error)
@@ -156,15 +158,17 @@ def captureImagesUntilClear(zed):
 # =====================================================================================================================
 
 
-def initializationForTest():
+def initializationForTest(enable_motor=False):
     """
-    Instantiates new Motor and ZED Camera object with camera opened to be used for running depth sensor tests. Be sure
-    to close the Motor and Camera object when done using it.
+    Instantiates new Motor Controller and ZED Camera object with camera opened to be used for running depth sensor
+    tests. Be sure to close the Motor and Camera object when done using it.
 
-    :return: motor and ZED camera object as a 2-tuple (Motor, Camera)
+    :param enable_motor: boolean for whether to set up Motor
+    :return: motor controller and ZED camera object as a 2-tuple (Motor, Camera), returns None for motor if
+        enable_motor = False
     """
     # initialization
-    motor = MotorController('COMx')
+    motor = MotorController('COMx') if enable_motor else None
     zed = sl.Camera()
     init_params = sl.InitParameters()
     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
@@ -184,14 +188,16 @@ def moveForwardAndStopTest(motor, zed):
     Test run in which the robot moves forward and stops when it gets close enough to an obstacle.
     """
     # moves robot forward
-    motor.forward(FORWARD_SPEED)
+    if motor is not None:
+        motor.forward(FORWARD_SPEED)
     print("Robot moving forward")
 
     # keeps moving forward until it sees close enough obstacle in front of it
     captureImagesUntilCloseToObstacle(zed)
 
     # stops robot
-    motor.stop()
+    if motor is not None:
+        motor.stop()
     print("Robot has stopped")
 
 
@@ -200,15 +206,17 @@ def turnLeftAndStopTest(motor, zed):
     Test run in which the robot turns left and stops when it detects no close obstacle in front of it.
     """
     # turns robot left
+    if motor is not None:
+        motor.turnLeft(TURNING_SPEED)
     print("Robot turning left")
-    motor.turnLeft(TURNING_SPEED)
 
     # keeps turning left until it sees no close obstacle in front of it
     captureImagesUntilClear(zed)
 
     # stops robot
+    if motor is not None:
+        motor.stop()
     print("Robot has stopped")
-    motor.stop()
 
 
 def turnRightAndStopTest(motor, zed):
@@ -216,15 +224,17 @@ def turnRightAndStopTest(motor, zed):
     Test run in which the robot turns right and stops when it detects no close obstacle in front of it.
     """
     # turns robot right
+    if motor is not None:
+        motor.turnRight(TURNING_SPEED)
     print("Robot turning right")
-    motor.turnRight(TURNING_SPEED)
 
     # keeps turning right until it sees no close obstacle in front of it
     captureImagesUntilClear(zed)
 
     # stops robot
+    if motor is not None:
+        motor.stop()
     print("Robot has stopped")
-    motor.stop()
 
 
 # ======================================================================================================================
@@ -232,12 +242,13 @@ def turnRightAndStopTest(motor, zed):
 
 if __name__ == "__main__":
     # initialization
-    motorForTest, zedForTest = initializationForTest()
+    motorForTest, zedForTest = initializationForTest(False)  # Set to True to connect to motor
 
     moveForwardAndStopTest(motorForTest, zedForTest)
     # turnLeftAndStopTest(motorForTest, zedForTest)
     # turnRightAndStopTest(motorForTest, zedForTest)
 
     # cleanup
-    motorForTest.shutDown()
+    if motorForTest is not None:
+        motorForTest.shutDown()
     zedForTest.close()
