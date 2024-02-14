@@ -216,7 +216,7 @@ def turnRightAndStopTest(motor, zed):
     Test run in which the robot turns left and stops when it detects no close obstacle in front of it.
     """
     # turns robot left
-    print("Robot turning left")
+    print("Robot turning right")
     motor.turnRight(TURNING_SPEED)
 
     # keeps turning left until it sees no close obstacle in front of it
