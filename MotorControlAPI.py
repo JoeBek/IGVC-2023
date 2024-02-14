@@ -89,7 +89,7 @@ class MotorController:
 
     #Turns the robot to the right, resulting in the left wheel turning and the right wheel stationary
     # speed takes values between 0-100 (0 being stopped, 100 being full speed)
-    def turnRIght(self, speed):
+    def turnRight(self, speed):
         if (speed < 0):
             exit()
         

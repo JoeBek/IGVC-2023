@@ -18,6 +18,15 @@ THRESHOLD_DISTANCE = 100
 MIN_OBSTACLE_DEPTH = 0
 MAX_OBSTACLE_DEPTH = 300
 
+# speed settings for motor controls
+FORWARD_SPEED = 25
+TURNING_SPEED = 10
+
+
+# ======================================================================================================================
+# Utility Functions
+# ======================================================================================================================
+
 
 def clipData(data_to_fix, lower_bound, upper_bound):
     """
@@ -37,14 +46,14 @@ def clipData(data_to_fix, lower_bound, upper_bound):
     return data_to_fix
 
 
-def detectCloseObstacle(image, depth_matrix):
+def getCoordinatesOfCloseObstacle(image, depth_matrix):
     """
-    Detects approximate point on center line of image of any obstacle that may be close.
+    Detects approximate point on center line of image for any obstacle that may be close.
 
     :param image: image retrieved using ZED SDK
     :param depth_matrix: depth measurement retrieved using ZED SDK (in cm)
 
-    :return: center of obstacle (x, y) as 2-tuple, or None if no obstacle detected
+    :return: center of obstacle (x, y) as a 2-tuple, or None if no obstacle detected
     """
     # initialization
     centerY = int(image.get_height() / 2)
@@ -76,9 +85,83 @@ def detectCloseObstacle(image, depth_matrix):
     return centerOfObstacleX, centerY
 
 
-def moveForwardAndStopTest():
+def captureImagesUntilCloseToObstacle(zed):
     """
-    Does a test run where the robot moves forward and stops when it gets close enough to an obstacle.
+    Uses depth sensor to wait until a close obstacle is detected. Used to avoid colliding into obstacles.
+
+    :param zed: the ZED camera whose depth sensor to use
+    """
+    # initialization for using sensor data
+    leftImage = sl.Mat()
+    leftDepthMatrix = sl.Mat()
+    runtime_params = sl.RuntimeParameters()
+
+    # keeps capturing depth images until obstacle detect
+    depthValue = THRESHOLD_DISTANCE + 10
+    while depthValue > THRESHOLD_DISTANCE:
+        # grabs an image
+        error = zed.grab(runtime_params)
+        if error == sl.ERROR_CODE.SUCCESS:
+            zed.retrieve_image(leftImage, sl.VIEW.LEFT)  # gets left image
+            zed.retrieve_measure(leftDepthMatrix, sl.MEASURE.DEPTH)  # gets left depth image
+
+            # gets depth value of obstacle, if any
+            obstacleCoordinates = getCoordinatesOfCloseObstacle(leftImage, leftDepthMatrix)
+            if obstacleCoordinates is None:
+                x = int(leftImage.get_width() / 2)
+                y = int(leftImage.get_height() / 2)
+            else:
+                x, y = obstacleCoordinates
+            err, depthValue = leftDepthMatrix.get_value(x, y)
+            print("Distance from camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
+        else:
+            print("Failed to grab image. Error:", error)
+
+
+def captureImagesUntilClear(zed):
+    """
+    Uses depth sensor to wait until no close obstacle is detected. Used to find open area to move to.
+
+    :param zed: the ZED camera whose depth sensor to use
+    """
+    # initialization for using sensor data
+    leftImage = sl.Mat()
+    leftDepthMatrix = sl.Mat()
+    runtime_params = sl.RuntimeParameters()
+
+    # keeps capturing depth images until obstacle detect
+    depthValue = THRESHOLD_DISTANCE - 10
+    while depthValue < THRESHOLD_DISTANCE:
+        # grabs an image
+        error = zed.grab(runtime_params)
+        if error == sl.ERROR_CODE.SUCCESS:
+            zed.retrieve_image(leftImage, sl.VIEW.LEFT)  # gets left image
+            zed.retrieve_measure(leftDepthMatrix, sl.MEASURE.DEPTH)  # gets left depth image
+
+            # gets depth value of obstacle, if there is an obstacle
+            obstacleCoordinates = getCoordinatesOfCloseObstacle(leftImage, leftDepthMatrix)
+            if obstacleCoordinates is None:
+                x = int(leftImage.get_width() / 2)
+                y = int(leftImage.get_height() / 2)
+            else:
+                x, y = obstacleCoordinates
+            err, depthValue = leftDepthMatrix.get_value(x, y)
+            print("Distance from camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
+        else:
+            print("Failed to grab image. Error:", error)
+
+
+# =====================================================================================================================
+# Test Cases
+# =====================================================================================================================
+
+
+def initializationForTest():
+    """
+    Instantiates new Motor and ZED Camera object with camera opened to be used for running depth sensor tests. Be sure
+    to close the Motor and Camera object when done using it.
+
+    :return: motor and ZED camera object as a 2-tuple (Motor, Camera)
     """
     # initialization
     motor = MotorController('COMx')
@@ -93,45 +176,68 @@ def moveForwardAndStopTest():
         print("Failed to open camera. Error code:", error)
         exit(1)
 
+    return motor, zed
+
+
+def moveForwardAndStopTest(motor, zed):
+    """
+    Test run in which the robot moves forward and stops when it gets close enough to an obstacle.
+    """
     # moves robot forward
-    motor.forward(25)
+    motor.forward(FORWARD_SPEED)
     print("Robot moving forward")
 
-    # initialization for using sensor data
-    leftImage = sl.Mat()
-    leftDepth = sl.Mat()
-    runtime_params = sl.RuntimeParameters()
-
-    # keeps moving robot forward until close enough to obstacle
-    depthValue = THRESHOLD_DISTANCE + 10
-    while depthValue > THRESHOLD_DISTANCE:
-        # grabs an image
-        error = zed.grab(runtime_params)
-        if error == sl.ERROR_CODE.SUCCESS:
-            zed.retrieve_image(leftImage, sl.VIEW.LEFT)  # gets left image
-            zed.retrieve_measure(leftDepth, sl.MEASURE.DEPTH)  # gets left depth image
-
-            # gets depth value of obstacle, if there is an obstacle
-            obstacleCoordinates = detectCloseObstacle(leftImage, leftDepth)
-            if obstacleCoordinates is None:
-                x = int(leftImage.get_width() / 2)
-                y = int(leftImage.get_height() / 2)
-            else:
-                x, y = obstacleCoordinates
-            err, depthValue = leftDepth.get_value(x, y)
-            depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
-            print("Distance to Camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
-        else:
-            print("Failed to grab image. Error:", error)
+    # keeps moving forward until it sees close enough obstacle in front of it
+    captureImagesUntilCloseToObstacle(zed)
 
     # stops robot
     motor.stop()
     print("Robot has stopped")
 
-    # cleanup
-    motor.shutDown()
-    zed.close()
+
+def turnLeftAndStopTest(motor, zed):
+    """
+    Test run in which the robot turns left and stops when it detects no close obstacle in front of it.
+    """
+    # turns robot left
+    print("Robot turning left")
+    motor.turnLeft(TURNING_SPEED)
+
+    # keeps turning left until it sees no close obstacle in front of it
+    captureImagesUntilClear(zed)
+
+    # stops robot
+    print("Robot has stopped")
+    motor.stop()
+
+
+def turnRightAndStopTest(motor, zed):
+    """
+    Test run in which the robot turns left and stops when it detects no close obstacle in front of it.
+    """
+    # turns robot left
+    print("Robot turning left")
+    motor.turnRight(TURNING_SPEED)
+
+    # keeps turning left until it sees no close obstacle in front of it
+    captureImagesUntilClear(zed)
+
+    # stops robot
+    print("Robot has stopped")
+    motor.stop()
+
+
+# ======================================================================================================================
 
 
 if __name__ == "__main__":
-    moveForwardAndStopTest()
+    # initialization
+    motorForTest, zedForTest = initializationForTest()
+
+    moveForwardAndStopTest(motorForTest, zedForTest)
+    # turnLeftAndStopTest(motorForTest, zedForTest)
+    # turnRightAndStopTest(motorForTest, zedForTest)
+
+    # cleanup
+    motorForTest.shutDown()
+    zedForTest.close()
