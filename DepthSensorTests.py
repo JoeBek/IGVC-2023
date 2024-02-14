@@ -158,17 +158,16 @@ def captureImagesUntilClear(zed):
 # =====================================================================================================================
 
 
-def initializationForTest(enable_motor=False):
+def initializationForTest(motor_com_port=None):
     """
     Instantiates new Motor Controller and ZED Camera object with camera opened to be used for running depth sensor
     tests. Be sure to close the Motor and Camera object when done using it.
 
-    :param enable_motor: boolean for whether to set up Motor
-    :return: motor controller and ZED camera object as a 2-tuple (Motor, Camera), returns None for motor if
-        enable_motor = False
+    :param motor_com_port: com port to connect with motor, or None to not connect to motor
+    :return: motor controller and ZED camera object as a 2-tuple (Motor, Camera); motor = None if enable_motor = False
     """
     # initialization
-    motor = MotorController('COMx') if enable_motor else None
+    motor = MotorController(motor_com_port) if motor_com_port else None
     zed = sl.Camera()
     init_params = sl.InitParameters()
     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
@@ -242,7 +241,7 @@ def turnRightAndStopTest(motor, zed):
 
 if __name__ == "__main__":
     # initialization
-    motorForTest, zedForTest = initializationForTest(False)  # Set to True to connect to motor
+    motorForTest, zedForTest = initializationForTest()  # pass in com port as string literal to connect to motor
 
     moveForwardAndStopTest(motorForTest, zedForTest)
     # turnLeftAndStopTest(motorForTest, zedForTest)
