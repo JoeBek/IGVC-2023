@@ -81,7 +81,7 @@ def moveForwardAndStopTest():
     Does a test run where the robot moves forward and stops when it gets close enough to an obstacle.
     """
     # initialization
-    motor = MotorController('COMx')  # update depending on system
+    motor = MotorController('COMx')
     zed = sl.Camera()
     init_params = sl.InitParameters()
     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
