@@ -3,8 +3,8 @@ Obstacle avoidance tests using depth sensor.
 
 Download Python ZED SDK by following this tutorial: https://www.stereolabs.com/docs/app-development/python/install
 
-Authors: Harrison Bui
-Date: February 13, 2024
+Author: Harrison Bui
+Date: February 14, 2024
 """
 
 from MotorControlAPI import MotorController
@@ -153,9 +153,9 @@ def captureImagesUntilClear(zed):
             print("Failed to grab image. Error:", error)
 
 
-# =====================================================================================================================
+# ======================================================================================================================
 # Test Runs
-# =====================================================================================================================
+# ======================================================================================================================
 
 
 def initializationForTest(motor_com_port=None):
