@@ -311,13 +311,6 @@ def zigzagDownCorridorTest(motor, zed):
     # lets robot travel until it is at least 1000 cm away from start position
     distanceFromStart = 0
     while distanceFromStart < 1000:
-        if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-            zed.get_position(zed_pose, sl.REFERENCE_FRAME.WORLD)
-            currentTranslation = zed_pose.get_translation()
-            currentTranslationData = currentTranslation.get()
-            distanceFromStart = abs(initialTranslationData[0] - currentTranslationData[0])
-            print("Distance from start: {0}".format(distanceFromStart))
-
         # moves robot forward
         if motor is not None:
             motor.forward(FORWARD_SPEED)
@@ -346,15 +339,13 @@ def zigzagDownCorridorTest(motor, zed):
             motor.stop()
         print("Robot has stopped")
 
-        # moves robot forward
-        if motor is not None:
-            motor.forward(FORWARD_SPEED)
-        print("Robot moving forward")
-
-    # stops robot
-    if motor is not None:
-        motor.stop()
-    print("Robot has stopped")
+        # updates distance from start
+        if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
+            zed.get_position(zed_pose, sl.REFERENCE_FRAME.WORLD)
+            currentTranslation = zed_pose.get_translation()
+            currentTranslationData = currentTranslation.get()
+            distanceFromStart = abs(initialTranslationData[0] - currentTranslationData[0])
+            print("Distance from start: {0}".format(distanceFromStart))
 
 
 # ======================================================================================================================
