@@ -11,10 +11,11 @@ from MotorControlAPI import MotorController
 import pyzed.sl as sl
 import math
 
-# how close robot should be allowed to approach obstacle (in cm)
-THRESHOLD_DISTANCE = 100
+# how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
+MIN_THRESHOLD_DISTANCE = 100
+MAX_THRESHOLD_DISTANCE = 125
 
-# lower and upper bounds on depth values (in cm) to consider for obstacle detection
+# lower and upper bounds on depth values (in cm) to consider for obstacle detection; for captureImages...() functions
 MIN_OBSTACLE_DEPTH = 0
 MAX_OBSTACLE_DEPTH = 300
 
@@ -90,6 +91,8 @@ def captureImagesUntilCloseToObstacle(zed):
     Uses depth sensor to wait until a close obstacle is detected. Used to avoid colliding into obstacles.
 
     :param zed: the ZED camera whose depth sensor to use
+
+    :return: data of frame in which close obstacle detected as a 3-tuple (x, y, image)
     """
     # initialization for using sensor data
     leftImage = sl.Mat()
@@ -97,8 +100,10 @@ def captureImagesUntilCloseToObstacle(zed):
     runtime_params = sl.RuntimeParameters()
 
     # keeps capturing depth images until obstacle detect
-    depthValue = THRESHOLD_DISTANCE + 10
-    while depthValue > THRESHOLD_DISTANCE:
+    depthValue = MIN_THRESHOLD_DISTANCE + 10
+    x = int(leftImage.get_width() / 2)
+    y = int(leftImage.get_height() / 2)
+    while depthValue > MIN_THRESHOLD_DISTANCE:
         # grabs an image
         error = zed.grab(runtime_params)
         if error == sl.ERROR_CODE.SUCCESS:
@@ -118,6 +123,8 @@ def captureImagesUntilCloseToObstacle(zed):
         else:
             print("Failed to grab image. Error:", error)
 
+    return x, y, leftImage
+
 
 def captureImagesUntilClear(zed):
     """
@@ -131,8 +138,8 @@ def captureImagesUntilClear(zed):
     runtime_params = sl.RuntimeParameters()
 
     # keeps capturing depth images until obstacle detect
-    depthValue = THRESHOLD_DISTANCE - 10
-    while depthValue < THRESHOLD_DISTANCE:
+    depthValue = MAX_THRESHOLD_DISTANCE - 10
+    while depthValue < MAX_THRESHOLD_DISTANCE:
         # grabs an image
         error = zed.grab(runtime_params)
         if error == sl.ERROR_CODE.SUCCESS:
@@ -154,14 +161,14 @@ def captureImagesUntilClear(zed):
 
 
 # ======================================================================================================================
-# Test Runs
+# Depth Sensor Test Runs
 # ======================================================================================================================
 
 
 def initializationForTest(motor_com_port=None):
     """
     Instantiates new Motor Controller and ZED Camera object with camera opened to be used for running depth sensor
-    tests. Be sure to close the Motor and Camera object when done using it.
+    tests. Be sure to close the Motor and Camera object when done using them.
 
     :param motor_com_port: com port to connect with motor, or None to not connect to motor
     :return: motor controller and ZED camera object as a 2-tuple (Motor, Camera); motor = None if enable_motor = False
@@ -172,6 +179,7 @@ def initializationForTest(motor_com_port=None):
     init_params = sl.InitParameters()
     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
     init_params.coordinate_units = sl.UNIT.CENTIMETER
+    init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
 
     # opens the camera
     error = zed.open(init_params)
@@ -236,6 +244,119 @@ def turnRightAndStopTest(motor, zed):
     print("Robot has stopped")
 
 
+def steerAwayFromObstacleTest(motor, zed):
+    """
+    Test run in which the robot steers away from obstacle as the robot approaches the obstacle.
+    """
+    # moves robot forward
+    if motor is not None:
+        motor.forward(FORWARD_SPEED)
+    print("Robot moving forward")
+
+    # stops robot when close to obstacle
+    obstacleX, obstacleY, imageWithCloseObstacle = captureImagesUntilCloseToObstacle(zed)
+    if motor is not None:
+        motor.stop()
+    print("Robot has stopped")
+
+    # chooses direction in which to turn robot to dodge obstacle
+    centerX = imageWithCloseObstacle.get_width() / 2
+    if obstacleX < centerX:  # obstacle on left side
+        if motor is not None:
+            motor.turnRight(TURNING_SPEED)
+        print("Robot turning right")
+    else:  # obstacle on right side
+        if motor is not None:
+            motor.turnLeft(TURNING_SPEED)
+        print("Robot turning left")
+
+    # stops robot when it is clear
+    captureImagesUntilClear(zed)
+    if motor is not None:
+        motor.stop()
+    print("Robot has stopped")
+
+    # moves robot forward
+    if motor is not None:
+        motor.forward(FORWARD_SPEED)
+    print("Robot moving forward")
+
+    # stops robot when it is clear
+    captureImagesUntilCloseToObstacle(zed)
+    if motor is not None:
+        motor.stop()
+    print("Robot has stopped")
+
+
+def zigzagDownCorridorTest(motor, zed):
+    """
+    Test run in which robot navigates down corridor with small obstacles in the way
+    """
+    # initialization
+    tracking_parameters = sl.PositionalTrackingParameters()
+    err = zed.enable_positional_tracking(tracking_parameters)
+    if err != sl.ERROR_CODE.SUCCESS:
+        exit(1)
+    zed_pose = sl.Pose()
+    runtime_parameters = sl.RuntimeParameters()
+
+    # gets initial pose data
+    initialTranslationData = None
+    if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
+        # gets the pose of the left eye of the camera with reference to the world frame
+        zed.get_position(zed_pose, sl.REFERENCE_FRAME.WORLD)
+        initialTranslation = zed_pose.get_translation()
+        initialTranslationData = initialTranslation.get()
+
+    # lets robot travel until it is at least 1000 cm away from start position
+    distanceFromStart = 0
+    while distanceFromStart < 1000:
+        if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
+            zed.get_position(zed_pose, sl.REFERENCE_FRAME.WORLD)
+            currentTranslation = zed_pose.get_translation()
+            currentTranslationData = currentTranslation.get()
+            distanceFromStart = abs(initialTranslationData[0] - currentTranslationData[0])
+            print("Distance from start: {0}".format(distanceFromStart))
+
+        # moves robot forward
+        if motor is not None:
+            motor.forward(FORWARD_SPEED)
+        print("Robot moving forward")
+
+        # stops robot when close to obstacle
+        obstacleX, obstacleY, imageWithCloseObstacle = captureImagesUntilCloseToObstacle(zed)
+        if motor is not None:
+            motor.stop()
+        print("Robot has stopped")
+
+        # chooses direction in which to turn robot to dodge obstacle
+        centerX = imageWithCloseObstacle.get_width() / 2
+        if obstacleX < centerX:  # obstacle on left side
+            if motor is not None:
+                motor.turnRight(TURNING_SPEED)
+            print("Robot turning right")
+        else:  # obstacle on right side
+            if motor is not None:
+                motor.turnLeft(TURNING_SPEED)
+            print("Robot turning left")
+
+        # stops robot when it is clear
+        captureImagesUntilClear(zed)
+        if motor is not None:
+            motor.stop()
+        print("Robot has stopped")
+
+        # moves robot forward
+        if motor is not None:
+            motor.forward(FORWARD_SPEED)
+        print("Robot moving forward")
+
+    # stops robot
+    if motor is not None:
+        motor.stop()
+    print("Robot has stopped")
+
+
 # ======================================================================================================================
 
 
@@ -246,6 +367,9 @@ if __name__ == "__main__":
     moveForwardAndStopTest(motorForTest, zedForTest)
     # turnLeftAndStopTest(motorForTest, zedForTest)
     # turnRightAndStopTest(motorForTest, zedForTest)
+
+    # steerAwayFromObstacleTest(motorForTest, zedForTest)
+    # zigzagDownCorridorTest(motorForTest, zedForTest)
 
     # cleanup
     if motorForTest is not None:
