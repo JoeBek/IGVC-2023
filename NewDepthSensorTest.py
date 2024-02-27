@@ -13,7 +13,7 @@ import math
 import time
 
 # how close robot should be allowed to approach obstacle (in cm)
-THRESHOLD_DISTANCE = 100
+THRESHOLD_DISTANCE = 150
 
 # lower and upper bounds on depth values (in cm) to consider for obstacle detection
 MIN_OBSTACLE_DEPTH = 0
@@ -103,6 +103,7 @@ def captureImagesUntilCloseToObstacle(zed, motors):
 
     # keeps capturing depth images until obstacle detect
     depthValue = THRESHOLD_DISTANCE + 10
+    initialTime = 0
     while depthValue > THRESHOLD_DISTANCE:
         if (time.time_ns() > initialTime + (ONE_SECOND_DELAY*0.1)):
             motors.forward(20)
@@ -125,6 +126,7 @@ def captureImagesUntilCloseToObstacle(zed, motors):
             print("Distance from camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
         else:
             print("Failed to grab image. Error:", error)
+
 
 
 def captureImagesUntilClear(zed):
@@ -175,8 +177,8 @@ def initializationForTest(motor_com_port=None):
     :return: motor controller and ZED camera object as a 2-tuple (Motor, Camera); motor = None if enable_motor = False
     """
     # initialization
-    motor = MotorController(motor_com_port) if motor_com_port else None
     zed = sl.Camera()
+    motor = MotorController(motor_com_port) if motor_com_port else None
     init_params = sl.InitParameters()
     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
     init_params.coordinate_units = sl.UNIT.CENTIMETER
@@ -202,9 +204,19 @@ def moveForwardAndStopTest(motor, zed):
     # keeps moving forward until it sees close enough obstacle in front of it
     captureImagesUntilCloseToObstacle(zed, motor)
 
+    motor.backward(20)
+    time.sleep(0.01)
+    motor.backward(20)
+    time.sleep(0.01)
+    motor.backward(20)
+    time.sleep(0.01)
+    motor.backward(20)
+    time.sleep(0.01)
+
     # stops robot
     if motor is not None:
         motor.stop()
+        time.sleep(0.01)
     print("Robot has stopped")
 
 
