@@ -5,6 +5,7 @@ Download Python ZED SDK by following this tutorial: https://www.stereolabs.com/d
 
 Author: Harrison Bui
 Date: February 14, 2024
+    Updated: March 12, 2024 (incorporated multiprocessing for using Motor Controls)
 """
 
 from MotorControlAPI import MotorController
