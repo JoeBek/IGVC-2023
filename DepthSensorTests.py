@@ -10,6 +10,9 @@ Date: February 14, 2024
 from MotorControlAPI import MotorController
 import pyzed.sl as sl
 import math
+import multiprocessing
+import sys
+import time
 
 # how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
 MIN_THRESHOLD_DISTANCE = 100
@@ -22,6 +25,11 @@ MAX_OBSTACLE_DEPTH = 300
 # speed settings for motor controls
 FORWARD_SPEED = 25
 TURNING_SPEED = 10
+
+# how often to send the same move/turn command to robot (in ms between commands) to make it do the same thing overtime
+COMMAND_SEND_PERIOD = 100
+
+MILLISECOND_PER_SEC = 1000
 
 
 # ======================================================================================================================
@@ -49,7 +57,8 @@ def clipData(data_to_fix, lower_bound, upper_bound):
 
 def getCoordinatesOfCloseObstacle(image, depth_matrix):
     """
-    Detects approximate point on center line of image for any obstacle that may be close.
+    Detects approximate point on center line of image for any obstacle that may be close. Limited to only detecting a
+    single obstacle.
 
     :param image: image retrieved using ZED SDK
     :param depth_matrix: depth measurement retrieved using ZED SDK (in cm)
@@ -77,13 +86,52 @@ def getCoordinatesOfCloseObstacle(image, depth_matrix):
         return None
 
     # finds rightmost pixel of obstacle
-    rightBoundX = len(depthList) - 1
-    while rightBoundX >= 0 and depthList[rightBoundX] >= MAX_OBSTACLE_DEPTH:
-        rightBoundX -= 1
+    rightBoundX = leftBoundX + 1
+    while rightBoundX < len(depthList) and depthList[rightBoundX] < MAX_OBSTACLE_DEPTH:
+        rightBoundX += 1
 
     # gets center pixel between the two boundary pixels
     centerOfObstacleX = int((leftBoundX + rightBoundX) / 2)
     return centerOfObstacleX, centerY
+
+
+def captureImageAndCheckForObstacle(zed, image, depth_matrix, runtime_params):
+    """
+    Captures a single image and detects location and depth value of any close obstacle. Helper function for the
+    captureImagesUntil* functions.
+
+    :param zed: the ZED camera whose depth sensor to use
+    :param image: the Mat object for storing image
+    :param depth_matrix: the Mat object for storing depth matrix
+    :param runtime_params: runtime parameters for ZED camera
+
+    :return: depth value, x, y
+    """
+    # grabs an image
+    error = zed.grab(runtime_params)
+    x = int(image.get_width() / 2)
+    y = int(image.get_height() / 2)
+    depthValue = None
+    if error == sl.ERROR_CODE.SUCCESS:
+        zed.retrieve_image(image, sl.VIEW.LEFT)  # gets left image
+        zed.retrieve_measure(depth_matrix, sl.MEASURE.DEPTH)  # gets left depth image
+
+        # gets depth value of obstacle, if any
+        obstacleCoordinates = getCoordinatesOfCloseObstacle(image, depth_matrix)
+        if obstacleCoordinates is None:
+            x = int(image.get_width() / 2)
+            y = int(image.get_height() / 2)
+        else:
+            x, y = obstacleCoordinates
+        err, depthValue = depth_matrix.get_value(x, y)
+        depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
+        timestampMillisecond = zed.get_timestamp(sl.TIME_REFERENCE.IMAGE).get_milliseconds()
+        print("Time: {0} ms, Distance from camera at ({1}, {2}): {3} cm".format(timestampMillisecond, x, y,
+            depthValue))
+    else:
+        print("Failed to grab image. Error:", error)
+
+    return depthValue, x, y
 
 
 def captureImagesUntilCloseToObstacle(zed):
@@ -100,28 +148,11 @@ def captureImagesUntilCloseToObstacle(zed):
     runtime_params = sl.RuntimeParameters()
 
     # keeps capturing depth images until obstacle detect
-    depthValue = MIN_THRESHOLD_DISTANCE + 10
+    depthValue = None
     x = int(leftImage.get_width() / 2)
     y = int(leftImage.get_height() / 2)
-    while depthValue > MIN_THRESHOLD_DISTANCE:
-        # grabs an image
-        error = zed.grab(runtime_params)
-        if error == sl.ERROR_CODE.SUCCESS:
-            zed.retrieve_image(leftImage, sl.VIEW.LEFT)  # gets left image
-            zed.retrieve_measure(leftDepthMatrix, sl.MEASURE.DEPTH)  # gets left depth image
-
-            # gets depth value of obstacle, if any
-            obstacleCoordinates = getCoordinatesOfCloseObstacle(leftImage, leftDepthMatrix)
-            if obstacleCoordinates is None:
-                x = int(leftImage.get_width() / 2)
-                y = int(leftImage.get_height() / 2)
-            else:
-                x, y = obstacleCoordinates
-            err, depthValue = leftDepthMatrix.get_value(x, y)
-            depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
-            print("Distance from camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
-        else:
-            print("Failed to grab image. Error:", error)
+    while depthValue is None or depthValue > MIN_THRESHOLD_DISTANCE:
+        depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtime_params)
 
     return x, y, leftImage
 
@@ -138,26 +169,27 @@ def captureImagesUntilClear(zed):
     runtime_params = sl.RuntimeParameters()
 
     # keeps capturing depth images until obstacle detect
-    depthValue = MAX_THRESHOLD_DISTANCE - 10
-    while depthValue < MAX_THRESHOLD_DISTANCE:
-        # grabs an image
-        error = zed.grab(runtime_params)
-        if error == sl.ERROR_CODE.SUCCESS:
-            zed.retrieve_image(leftImage, sl.VIEW.LEFT)  # gets left image
-            zed.retrieve_measure(leftDepthMatrix, sl.MEASURE.DEPTH)  # gets left depth image
+    depthValue = None
+    while depthValue is None or depthValue < MAX_THRESHOLD_DISTANCE:
+        depthValue = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtime_params)[0]
 
-            # gets depth value of obstacle, if there is an obstacle
-            obstacleCoordinates = getCoordinatesOfCloseObstacle(leftImage, leftDepthMatrix)
-            if obstacleCoordinates is None:
-                x = int(leftImage.get_width() / 2)
-                y = int(leftImage.get_height() / 2)
-            else:
-                x, y = obstacleCoordinates
-            err, depthValue = leftDepthMatrix.get_value(x, y)
-            depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
-            print("Distance from camera at ({0}, {1}): {2} cm".format(x, y, depthValue))
-        else:
-            print("Failed to grab image. Error:", error)
+
+def moveForwardUntilSignaled(motor, event):
+    """
+    TODO: finalize comments
+    Repeatedly sends move forward commands to the robot, which is necessary to keep the robot moving.
+
+    :param motor:
+    :param event:
+    :return:
+    """
+    sys.stdout = sys.__stdout__
+    while not event.is_set():
+        if motor is not None:
+            motor.forward(FORWARD_SPEED)
+        # concurrency issue for printing output, but it's acceptable since it does not affect robot's functionality
+        print("Time: {0} ms, Sent move forward command".format(int(MILLISECOND_PER_SEC * time.time())))
+        time.sleep(COMMAND_SEND_PERIOD / MILLISECOND_PER_SEC)
 
 
 # ======================================================================================================================
@@ -194,15 +226,23 @@ def moveForwardAndStopTest(motor, zed):
     """
     Test run in which the robot moves forward and stops when it gets close enough to an obstacle.
     """
+    # one core used for capturing images, one core used for repeatedly sending forward commands
+    if multiprocessing.cpu_count() >= 2:
+        print("Testing error: need at least 2 CPU's")
+        return
+
     # moves robot forward
-    if motor is not None:
-        motor.forward(FORWARD_SPEED)
+    event = multiprocessing.Event()  # assumes multicore system
+    process = multiprocessing.Process(target=moveForwardUntilSignaled, args=(motor, event))
+    process.start()
     print("Robot moving forward")
 
     # keeps moving forward until it sees close enough obstacle in front of it
     captureImagesUntilCloseToObstacle(zed)
 
     # stops robot
+    event.set()
+    process.join()
     if motor is not None:
         motor.stop()
     print("Robot has stopped")
