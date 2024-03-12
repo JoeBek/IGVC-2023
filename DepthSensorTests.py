@@ -16,21 +16,19 @@ import sys
 import time
 
 # how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
-MIN_THRESHOLD_DISTANCE = 100
-MAX_THRESHOLD_DISTANCE = 125
+MIN_THRESHOLD_DISTANCE_CM = 100
+MAX_THRESHOLD_DISTANCE_CM = 125
 
 # lower and upper bounds on depth values (in cm) to consider for obstacle detection; for captureImages...() functions
-MIN_OBSTACLE_DEPTH = 0
-MAX_OBSTACLE_DEPTH = 300
+MIN_OBSTACLE_DEPTH_CM = 0
+MAX_OBSTACLE_DEPTH_CM = 300
 
 # speed settings for motor controls
 FORWARD_SPEED = 25
 TURNING_SPEED = 10
 
 # how often to send the same move/turn command to robot (in ms between commands) to make it do the same thing overtime
-COMMAND_SEND_PERIOD = 100
-
-MILLISECOND_PER_SEC = 1000
+COMMAND_SEND_PERIOD_MS = 100
 
 
 # ======================================================================================================================
@@ -74,12 +72,12 @@ def getCoordinatesOfCloseObstacle(image, depth_matrix):
     for currentX in range(image.get_width()):
         error, currentDepth = depth_matrix.get_value(currentX, centerY)
         # cleans up data
-        currentDepth = clipData(currentDepth, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
+        currentDepth = clipData(currentDepth, MIN_OBSTACLE_DEPTH_CM, MAX_OBSTACLE_DEPTH_CM)
         depthList.append(currentDepth)
 
     # finds leftmost pixel of obstacle
     leftBoundX = 0
-    while leftBoundX < len(depthList) and depthList[leftBoundX] >= MAX_OBSTACLE_DEPTH:
+    while leftBoundX < len(depthList) and depthList[leftBoundX] >= MAX_OBSTACLE_DEPTH_CM:
         leftBoundX += 1
 
     # checks if no obstacle detected
@@ -88,7 +86,7 @@ def getCoordinatesOfCloseObstacle(image, depth_matrix):
 
     # finds rightmost pixel of obstacle
     rightBoundX = leftBoundX + 1
-    while rightBoundX < len(depthList) and depthList[rightBoundX] < MAX_OBSTACLE_DEPTH:
+    while rightBoundX < len(depthList) and depthList[rightBoundX] < MAX_OBSTACLE_DEPTH_CM:
         rightBoundX += 1
 
     # gets center pixel between the two boundary pixels
@@ -96,36 +94,36 @@ def getCoordinatesOfCloseObstacle(image, depth_matrix):
     return centerOfObstacleX, centerY
 
 
-def captureImageAndCheckForObstacle(zed, image, depth_matrix, runtime_params):
+def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_params):
     """
     Captures a single image and detects location and depth value of any close obstacle. Helper function for the
     captureImagesUntil* functions.
 
     :param zed: the ZED camera whose depth sensor to use
-    :param image: the Mat object for storing image
-    :param depth_matrix: the Mat object for storing depth matrix
+    :param left_image: the Mat object for storing image
+    :param left_depth_matrix: the Mat object for storing depth matrix
     :param runtime_params: runtime parameters for ZED camera
 
     :return: depth value, x, y
     """
     # grabs an image
     error = zed.grab(runtime_params)
-    x = int(image.get_width() / 2)
-    y = int(image.get_height() / 2)
+    x = int(left_image.get_width() / 2)
+    y = int(left_image.get_height() / 2)
     depthValue = None
     if error == sl.ERROR_CODE.SUCCESS:
-        zed.retrieve_image(image, sl.VIEW.LEFT)  # gets left image
-        zed.retrieve_measure(depth_matrix, sl.MEASURE.DEPTH)  # gets left depth image
+        zed.retrieve_image(left_image, sl.VIEW.LEFT)  # gets left image
+        zed.retrieve_measure(left_depth_matrix, sl.MEASURE.DEPTH)  # gets left depth image
 
         # gets depth value of obstacle, if any
-        obstacleCoordinates = getCoordinatesOfCloseObstacle(image, depth_matrix)
+        obstacleCoordinates = getCoordinatesOfCloseObstacle(left_image, left_depth_matrix)
         if obstacleCoordinates is None:
-            x = int(image.get_width() / 2)
-            y = int(image.get_height() / 2)
+            x = int(left_image.get_width() / 2)
+            y = int(left_image.get_height() / 2)
         else:
             x, y = obstacleCoordinates
-        err, depthValue = depth_matrix.get_value(x, y)
-        depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH, MAX_OBSTACLE_DEPTH)
+        err, depthValue = left_depth_matrix.get_value(x, y)
+        depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH_CM, MAX_OBSTACLE_DEPTH_CM)
         timestampMillisecond = zed.get_timestamp(sl.TIME_REFERENCE.IMAGE).get_milliseconds()
         print("Time: {0} ms, Distance from camera at ({1}, {2}): {3} cm".format(timestampMillisecond, x, y,
             depthValue))
@@ -152,7 +150,7 @@ def captureImagesUntilCloseToObstacle(zed):
     depthValue = None
     x = int(leftImage.get_width() / 2)
     y = int(leftImage.get_height() / 2)
-    while depthValue is None or depthValue > MIN_THRESHOLD_DISTANCE:
+    while depthValue is None or depthValue > MIN_THRESHOLD_DISTANCE_CM:
         depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtime_params)
 
     return x, y, leftImage
@@ -171,26 +169,25 @@ def captureImagesUntilClear(zed):
 
     # keeps capturing depth images until obstacle detect
     depthValue = None
-    while depthValue is None or depthValue < MAX_THRESHOLD_DISTANCE:
+    while depthValue is None or depthValue < MAX_THRESHOLD_DISTANCE_CM:
         depthValue = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtime_params)[0]
 
 
-def moveForwardUntilSignaled(motor, event):
+def moveForwardUntilSignaled(motor, stop_event):
     """
-    TODO: finalize comments
-    Repeatedly sends move forward commands to the robot, which is necessary to keep the robot moving.
+    Repeatedly sends move forward commands to the robot, which is necessary to keep the robot moving overtime.
 
-    :param motor:
-    :param event:
-    :return:
+    :param motor: the Motor Controller for moving the robot
+    :param stop_event: the Event object that tracks when robot receives the command to stop
     """
-    sys.stdout = sys.__stdout__
-    while not event.is_set():
+    sys.stdout = sys.__stdout__  # ensures this child process outputs to same standard output as that of parent process
+    MS_PER_SEC = 1000  # number of milliseconds per second
+    while not stop_event.is_set():
         if motor is not None:
             motor.forward(FORWARD_SPEED)
-        # concurrency issue for printing output, but it's acceptable since it does not affect robot's functionality
-        print("Time: {0} ms, Sent move forward command".format(int(MILLISECOND_PER_SEC * time.time())))
-        time.sleep(COMMAND_SEND_PERIOD / MILLISECOND_PER_SEC)
+        # race condition for printing output, but it's acceptable since it does not affect robot's functionality
+        print("Sent move forward command")
+        time.sleep(COMMAND_SEND_PERIOD_MS / MS_PER_SEC)
 
 
 # ======================================================================================================================
@@ -228,7 +225,7 @@ def moveForwardAndStopTest(motor, zed):
     Test run in which the robot moves forward and stops when it gets close enough to an obstacle.
     """
     # one core used for capturing images, one core used for repeatedly sending forward commands
-    if multiprocessing.cpu_count() >= 2:
+    if multiprocessing.cpu_count() < 2:
         print("Testing error: need at least 2 CPU's")
         return
 
@@ -246,7 +243,19 @@ def moveForwardAndStopTest(motor, zed):
     process.join()
     if motor is not None:
         motor.stop()
-    print("Robot has stopped")
+
+    # continues to collect data after robot stops (to collect data on braking distance for competition design report)
+    collisionFlag = False
+    counter = 0
+    while not collisionFlag:
+        depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters())[0]
+        if depthValue <= 0 or counter == 0:
+            if depthValue > 0:
+                print("Robot stopping")
+            else:
+                print("Robot may have collided into obstacle")
+                collisionFlag = True
+        counter = (counter + 1) % 10
 
 
 def turnLeftAndStopTest(motor, zed):
