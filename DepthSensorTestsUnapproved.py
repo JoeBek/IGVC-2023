@@ -146,7 +146,7 @@ def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_
     return depthValue, x, y
 
 
-def captureImagesUntilCloseToObstacle(zed, outputFile, writeOutputLock, parent_connection):
+def captureImagesUntilCloseToObstacle(zed, outputFile, writeOutputLock, parent_connection, pipe_empty_event):
     """
     Uses depth sensor to wait until a close obstacle is detected. Used to avoid colliding into obstacles.
 
@@ -167,7 +167,9 @@ def captureImagesUntilCloseToObstacle(zed, outputFile, writeOutputLock, parent_c
         depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtimeParameters,
             outputFile, writeOutputLock)
         if USE_SLOWDOWN_FEATURE:
-            parent_connection.send(depthValue)
+            if pipe_empty_event.is_set():
+                parent_connection.send(depthValue)
+                pipe_empty_event.clear()
 
     return x, y, leftImage
 
@@ -206,7 +208,8 @@ def writeToStdoutAndFile(file_descriptor, output_to_write, write_output_lock=Non
         write_output_lock.release()
 
 
-def moveForwardUntilSignaled(motor, stop_event, output_file, write_output_lock, child_connection):
+def moveForwardUntilSignaled(motor, stop_event, output_file, write_output_lock, child_connection=None,
+    pipe_empty_event=None):
     """
     Repeatedly sends move forward commands to the robot, which is necessary to keep the robot moving overtime. Should
     be executed as a new process.
@@ -219,15 +222,19 @@ def moveForwardUntilSignaled(motor, stop_event, output_file, write_output_lock, 
     """
     speed = MAX_FORWARD_SPEED
     while not stop_event.is_set():
-        if USE_SLOWDOWN_FEATURE:
+        if USE_SLOWDOWN_FEATURE and child_connection is not None and pipe_empty_event is not None:
             try:
-                depthValue = child_connection.get_nowait()  # assumes read rate faster than write rate for pipe
-                speed = int((1.0 * MAX_FORWARD_SPEED) / (MAX_OBSTACLE_DEPTH_CM - MIN_THRESHOLD_DISTANCE_CM) *
-                    (depthValue - MIN_THRESHOLD_DISTANCE_CM))
-                if speed < 0:
-                    speed = 0
-                elif speed > 10:
-                    speed = 10
+                if not pipe_empty_event.is_set():
+                    depthValue = child_connection.recv()  # should not block since pipe already checked to be nonempty
+                    pipe_empty_event.set()
+
+                    # updates speed based on received depthValue
+                    speed = int((1.0 * MAX_FORWARD_SPEED) / (MAX_OBSTACLE_DEPTH_CM - MIN_THRESHOLD_DISTANCE_CM) *
+                        (depthValue - MIN_THRESHOLD_DISTANCE_CM))
+                    if speed < 0:
+                        speed = 0
+                    elif speed > MAX_FORWARD_SPEED:
+                        speed = MAX_FORWARD_SPEED
             except queue.Empty:
                 pass
 
@@ -282,15 +289,17 @@ def moveForwardAndStopTest(motor, zed):
     writeOutputLock = multiprocessing.Lock()
     stopEvent = multiprocessing.Event()
     childConnection, parentConnection = multiprocessing.Pipe(False)  # TODO: use for sharing depth value
+    pipeEmptyEvent = multiprocessing.Event()
+    pipeEmptyEvent.set()  # pipe is initially empty
 
     # moves robot forward
     moveRobotForwardProcess = multiprocessing.Process(target=moveForwardUntilSignaled, args=(motor, stopEvent,
-        outputFile, writeOutputLock, childConnection))
+        outputFile, writeOutputLock, childConnection, pipeEmptyEvent))
     writeToStdoutAndFile(outputFile.fileno(), "Robot moving forward\n")
     moveRobotForwardProcess.start()
 
     # keeps moving forward until it sees close enough obstacle in front of it
-    captureImagesUntilCloseToObstacle(zed, outputFile, writeOutputLock, parentConnection)
+    captureImagesUntilCloseToObstacle(zed, outputFile, writeOutputLock, parentConnection, pipeEmptyEvent)
 
     # stops robot
     stopEvent.set()
