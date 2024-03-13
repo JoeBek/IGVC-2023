@@ -14,6 +14,8 @@ import math
 import multiprocessing
 import sys
 import time
+import os
+import queue
 
 # how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
 MIN_THRESHOLD_DISTANCE_CM = 100
@@ -21,16 +23,24 @@ MAX_THRESHOLD_DISTANCE_CM = 125
 
 # lower and upper bounds on depth values (in cm) to consider for obstacle detection; for captureImages...() functions
 MIN_OBSTACLE_DEPTH_CM = 0
-MAX_OBSTACLE_DEPTH_CM = 300
+MAX_OBSTACLE_DEPTH_CM = 500
 
 # speed settings for motor controls
-FORWARD_SPEED = 25
+MAX_FORWARD_SPEED = 25
 TURNING_SPEED = 10
 
 # how often to send the same move/turn command to robot (in ms between commands) to make it do the same thing overtime
 COMMAND_SEND_PERIOD_MS = 100
 
-PROGRAM_START_TIME_MS = None  # TODO: for debugging
+# TODO: delete after testing
+'''
+Decreases the robot's speed as it approaches obstacle
+(decreases linearly from MAX_FORWARD_SPEED at MAX_OBSTACLE_DEPTH_CM to 0 at MIN_THRESHOLD_DISTANCE_CM)
+'''
+USE_SLOWDOWN_FEATURE = True  # Set to True to enable, or False to disable (if it doesn't work properly)
+
+# miscellaneous
+PROGRAM_START_TIME_MS = None  # reference start time of tests (in ms) after initialization
 MS_PER_SEC = 1000  # number of milliseconds per second
 
 # ======================================================================================================================
@@ -96,7 +106,8 @@ def getCoordinatesOfCloseObstacle(image, depth_matrix):
     return centerOfObstacleX, centerY
 
 
-def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_params, file):
+def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_params, outputFile,
+    writeOutputLock=None):
     """
     Captures a single image and detects location and depth value of any close obstacle. Helper function for the
     captureImagesUntil* functions.
@@ -127,17 +138,15 @@ def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_
         err, depthValue = left_depth_matrix.get_value(x, y)
         depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH_CM, MAX_OBSTACLE_DEPTH_CM)
         timestampMillisecond = zed.get_timestamp(sl.TIME_REFERENCE.IMAGE).get_milliseconds()
-        print("Time: {0} ms, Distance from camera at ({1}, {2}): {3} cm".format(timestampMillisecond - PROGRAM_START_TIME_MS, x, y,
-            depthValue))
-        file.write("Time: {0} ms, Distance from camera at ({1}, {2}): {3} cm\n".format(timestampMillisecond - PROGRAM_START_TIME_MS, x, y,
-            depthValue))
+        writeToStdoutAndFile(outputFile.fileno(), "Time: {0} ms, Distance from camera at ({1}, {2}): {3} cm\n".format(
+            timestampMillisecond - PROGRAM_START_TIME_MS, x, y, depthValue), writeOutputLock)
     else:
-        print("Failed to grab image. Error:", error)
+        writeToStdoutAndFile(outputFile.fileno(), "Failed to grab image. Error: {0}\n".format(error), writeOutputLock)
 
     return depthValue, x, y
 
 
-def captureImagesUntilCloseToObstacle(zed, file):
+def captureImagesUntilCloseToObstacle(zed, outputFile, writeOutputLock, parent_connection, pipe_empty_event):
     """
     Uses depth sensor to wait until a close obstacle is detected. Used to avoid colliding into obstacles.
 
@@ -148,14 +157,19 @@ def captureImagesUntilCloseToObstacle(zed, file):
     # initialization for using sensor data
     leftImage = sl.Mat()
     leftDepthMatrix = sl.Mat()
-    runtime_params = sl.RuntimeParameters()
+    runtimeParameters = sl.RuntimeParameters()
 
     # keeps capturing depth images until obstacle detect
     depthValue = None
     x = int(leftImage.get_width() / 2)
     y = int(leftImage.get_height() / 2)
     while depthValue is None or depthValue > MIN_THRESHOLD_DISTANCE_CM:
-        depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtime_params, file)
+        depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtimeParameters,
+            outputFile, writeOutputLock)
+        if USE_SLOWDOWN_FEATURE:
+            if pipe_empty_event.is_set():
+                parent_connection.send(depthValue)
+                pipe_empty_event.clear()
 
     return x, y, leftImage
 
@@ -177,20 +191,53 @@ def captureImagesUntilClear(zed):
         depthValue = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtime_params)[0]
 
 
-def moveForwardUntilSignaled(motor, stop_event, file):
+def writeToStdoutAndFile(file_descriptor, output_to_write, write_output_lock=None):
     """
-    Repeatedly sends move forward commands to the robot, which is necessary to keep the robot moving overtime.
+    Writes output to standard output and to specified file. File associated with file_descriptor must already have
+    been opened.
+
+    :param file_descriptor: file descriptor of file to write output to
+    :param output_to_write: the output to write as a String
+    :param write_output_lock: lock used to protect writing output when using multiprocessing
+    """
+    if write_output_lock is not None:
+        write_output_lock.acquire()
+    sys.stdout.write(output_to_write)
+    os.write(file_descriptor, output_to_write.encode())
+    if write_output_lock is not None:
+        write_output_lock.release()
+
+
+def moveForwardUntilSignaled(motor, stop_event, output_file, write_output_lock, child_connection=None,
+    pipe_empty_event=None):
+    """
+    Repeatedly sends move forward commands to the robot, which is necessary to keep the robot moving overtime. Should
+    be executed as a new process.
 
     :param motor: the Motor Controller for moving the robot
     :param stop_event: the Event object that tracks when robot receives the command to stop
+    :param output_file: the file to print output to
+    :param write_output_lock: lock used to protect writing output when using multiprocessing
+    :param child_connection: the end of pipe to receive depth sensor data from
     """
-    sys.stdout = sys.__stdout__  # ensures this child process outputs to same standard output as that of parent process
+    speed = MAX_FORWARD_SPEED
     while not stop_event.is_set():
+        if USE_SLOWDOWN_FEATURE and child_connection is not None and pipe_empty_event is not None:
+            if not pipe_empty_event.is_set():
+                depthValue = child_connection.recv()  # should not block since pipe already checked to be nonempty
+                pipe_empty_event.set()
+
+                # updates speed based on received depthValue
+                speed = int((1.0 * MAX_FORWARD_SPEED) / (MAX_OBSTACLE_DEPTH_CM - MIN_THRESHOLD_DISTANCE_CM) *
+                    (depthValue - MIN_THRESHOLD_DISTANCE_CM))
+                if speed < 0:
+                    speed = 0
+                elif speed > MAX_FORWARD_SPEED:
+                    speed = MAX_FORWARD_SPEED
+
         if motor is not None:
-            motor.forward(FORWARD_SPEED)
-        # race condition for printing output, but it's acceptable since it does not affect robot's functionality
-        print("Sent move forward command")
-        file.write("Sent move forward command\n")
+            motor.forward(speed)
+        writeToStdoutAndFile(output_file.fileno(), "Sent move forward command {0}\n".format(speed), write_output_lock)
         time.sleep(COMMAND_SEND_PERIOD_MS / MS_PER_SEC)
 
 
@@ -226,46 +273,55 @@ def initializationForTest(motor_com_port=None):
 
 def moveForwardAndStopTest(motor, zed):
     """
-    Test run in which the robot moves forward and stops when it gets close enough to an obstacle.
+    Test run in which the robot moves forward and stops when it gets close enough to an obstacle. Outputs robot's
+    performance to standard output and to an output file.
     """
-    # one core used for capturing images, one core used for repeatedly sending forward commands
+    # one core used for capturing images, one core used for repeatedly sending move forward commands
     if multiprocessing.cpu_count() < 2:
         print("Testing error: need at least 2 CPU's")
         return
 
+    # initialization
+    outputFile = open("moveForwardAndStopTestResults.txt", "w")
+    writeOutputLock = multiprocessing.Lock()
+    stopEvent = multiprocessing.Event()
+    childConnection, parentConnection = multiprocessing.Pipe(False)  # TODO: use for sharing depth value
+    pipeEmptyEvent = multiprocessing.Event()
+    pipeEmptyEvent.set()  # pipe is initially empty
+
     # moves robot forward
-    file = open("moveForwardAndStopTestResults.txt", "w")
-    event = multiprocessing.Event()  # assumes multicore system
-    process = multiprocessing.Process(target=moveForwardUntilSignaled, args=(motor, event, file))
-    process.start()
-    print("Robot moving forward")
-    file.write("Robot moving forward\n")
+    moveRobotForwardProcess = multiprocessing.Process(target=moveForwardUntilSignaled, args=(motor, stopEvent,
+        outputFile, writeOutputLock, childConnection, pipeEmptyEvent))
+    writeToStdoutAndFile(outputFile.fileno(), "Robot moving forward\n")
+    moveRobotForwardProcess.start()
 
     # keeps moving forward until it sees close enough obstacle in front of it
-    captureImagesUntilCloseToObstacle(zed, file)
+    captureImagesUntilCloseToObstacle(zed, outputFile, writeOutputLock, parentConnection, pipeEmptyEvent)
 
     # stops robot
-    event.set()
-    process.join()
+    stopEvent.set()
+    moveRobotForwardProcess.join()
     if motor is not None:
         motor.stop()
 
     # continues to collect data after robot stops (to collect data on braking distance for competition design report)
     collisionFlag = False
-    counter = 0
-    while not collisionFlag:
-        depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters(), file)[0]
-        if depthValue <= 0 or counter == 0:
-            if depthValue > 0:
-                print("Robot stopping")
-                file.write("Robot stopping\n")
-            else:
-                print("Robot may have collided into obstacle")
-                file.write("Robot may have collided into obstacle\n")
-                collisionFlag = True
-        counter = (counter + 1) % 10
+    counter = 0  # used to periodically remind that robot is stopping in the output
+    try:
+        while not collisionFlag:
+            depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters(), outputFile)[0]
+            if depthValue <= 0 or counter == 0:
+                if depthValue > 0:
+                    writeToStdoutAndFile(outputFile.fileno(), "Robot stopping\n")
+                else:
+                    writeToStdoutAndFile(outputFile.fileno(), "Robot may have collided into obstacle\n")
+                    collisionFlag = True
+            counter = (counter + 1) % 10
+    except KeyboardInterrupt:  # pressing Ctrl+C stops data collection if robot successfully stops at nonzero distance
+        pass
 
-    file.close()
+    # cleanup
+    outputFile.close()
 
 
 def turnLeftAndStopTest(motor, zed):
@@ -310,7 +366,7 @@ def steerAwayFromObstacleTest(motor, zed):
     """
     # moves robot forward
     if motor is not None:
-        motor.forward(FORWARD_SPEED)
+        motor.forward(MAX_FORWARD_SPEED)
     print("Robot moving forward")
 
     # stops robot when close to obstacle
@@ -338,7 +394,7 @@ def steerAwayFromObstacleTest(motor, zed):
 
     # moves robot forward
     if motor is not None:
-        motor.forward(FORWARD_SPEED)
+        motor.forward(MAX_FORWARD_SPEED)
     print("Robot moving forward")
 
     # stops robot when it is clear
@@ -373,7 +429,7 @@ def zigzagDownCorridorTest(motor, zed):
     while distanceFromStart < 1000:
         # moves robot forward
         if motor is not None:
-            motor.forward(FORWARD_SPEED)
+            motor.forward(MAX_FORWARD_SPEED)
         print("Robot moving forward")
 
         # stops robot when close to obstacle
@@ -408,16 +464,38 @@ def zigzagDownCorridorTest(motor, zed):
             print("Distance from start: {0}".format(distanceFromStart))
 
 
+# TODO: delete later
+def miscellaneousFileWritingAndMultiprocessingTest():
+    """
+    Test writing to stdout and file with multiprocessing. Output printed in "sample.txt".
+    """
+    file = open("sample.txt", "w")
+    lock = multiprocessing.Lock()
+    event = multiprocessing.Event()
+    process = multiprocessing.Process(target=moveForwardUntilSignaled, args=(None, event, file, lock))
+    process.start()
+    for i in range(3, 0, -1):
+        writeToStdoutAndFile(file.fileno(), "{0} sec left...\n".format(i), lock)
+        time.sleep(1)
+    event.set()
+    process.join()
+    writeToStdoutAndFile(file.fileno(), "Time's up!\n")
+    file.close()
+
+
 # ======================================================================================================================
 
 
 if __name__ == "__main__":
+    # TODO: delete later
+    # miscellaneousFileWritingAndMultiprocessingTest()
+
     # initialization
     motorForTest, zedForTest = initializationForTest()  # pass in com port as string literal to connect to motor
-
     PROGRAM_START_TIME_MS = MS_PER_SEC * int(time.time())
     print("Start time:", PROGRAM_START_TIME_MS)
-    moveForwardAndStopTest(motorForTest, zedForTest)
+
+    moveForwardAndStopTest(motorForTest, zedForTest)  # on successful stop, press Ctrl+C to stop program
     # turnLeftAndStopTest(motorForTest, zedForTest)
     # turnRightAndStopTest(motorForTest, zedForTest)
 
