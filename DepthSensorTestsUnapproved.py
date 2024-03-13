@@ -18,12 +18,12 @@ import os
 import queue
 
 # how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
-MIN_THRESHOLD_DISTANCE_CM = 500
-MAX_THRESHOLD_DISTANCE_CM = 525
+MIN_THRESHOLD_DISTANCE_CM = 100
+MAX_THRESHOLD_DISTANCE_CM = 125
 
 # lower and upper bounds on depth values (in cm) to consider for obstacle detection; for captureImages...() functions
 MIN_OBSTACLE_DEPTH_CM = 0
-MAX_OBSTACLE_DEPTH_CM = 1000
+MAX_OBSTACLE_DEPTH_CM = 500
 
 # speed settings for motor controls
 MAX_FORWARD_SPEED = 25
@@ -223,20 +223,17 @@ def moveForwardUntilSignaled(motor, stop_event, output_file, write_output_lock, 
     speed = MAX_FORWARD_SPEED
     while not stop_event.is_set():
         if USE_SLOWDOWN_FEATURE and child_connection is not None and pipe_empty_event is not None:
-            try:
-                if not pipe_empty_event.is_set():
-                    depthValue = child_connection.recv()  # should not block since pipe already checked to be nonempty
-                    pipe_empty_event.set()
+            if not pipe_empty_event.is_set():
+                depthValue = child_connection.recv()  # should not block since pipe already checked to be nonempty
+                pipe_empty_event.set()
 
-                    # updates speed based on received depthValue
-                    speed = int((1.0 * MAX_FORWARD_SPEED) / (MAX_OBSTACLE_DEPTH_CM - MIN_THRESHOLD_DISTANCE_CM) *
-                        (depthValue - MIN_THRESHOLD_DISTANCE_CM))
-                    if speed < 0:
-                        speed = 0
-                    elif speed > MAX_FORWARD_SPEED:
-                        speed = MAX_FORWARD_SPEED
-            except queue.Empty:
-                pass
+                # updates speed based on received depthValue
+                speed = int((1.0 * MAX_FORWARD_SPEED) / (MAX_OBSTACLE_DEPTH_CM - MIN_THRESHOLD_DISTANCE_CM) *
+                    (depthValue - MIN_THRESHOLD_DISTANCE_CM))
+                if speed < 0:
+                    speed = 0
+                elif speed > MAX_FORWARD_SPEED:
+                    speed = MAX_FORWARD_SPEED
 
         if motor is not None:
             motor.forward(speed)

@@ -1,0 +1,493 @@
+Robot moving forward
+Sent move forward command 25
+Time: 745 ms, Distance from camera at (364, 360): 212.8460235595703 cm
+Time: 778 ms, Distance from camera at (303, 360): 214.9665985107422 cm
+Time: 795 ms, Distance from camera at (303, 360): 215.26309204101562 cm
+Time: 812 ms, Distance from camera at (305, 360): 215.96923828125 cm
+Time: 828 ms, Distance from camera at (303, 360): 216.4499053955078 cm
+Sent move forward command 7
+Time: 845 ms, Distance from camera at (303, 360): 216.32241821289062 cm
+Time: 862 ms, Distance from camera at (303, 360): 216.4150848388672 cm
+Time: 878 ms, Distance from camera at (361, 360): 212.85826110839844 cm
+Time: 895 ms, Distance from camera at (359, 360): 212.50047302246094 cm
+Time: 912 ms, Distance from camera at (301, 360): 216.13491821289062 cm
+Time: 928 ms, Distance from camera at (301, 360): 215.86099243164062 cm
+Sent move forward command 7
+Time: 945 ms, Distance from camera at (301, 360): 215.83677673339844 cm
+Time: 962 ms, Distance from camera at (306, 360): 215.2042999267578 cm
+Time: 978 ms, Distance from camera at (686, 360): 131.89801025390625 cm
+Time: 995 ms, Distance from camera at (297, 360): 214.66368103027344 cm
+Time: 1012 ms, Distance from camera at (302, 360): 213.5394744873047 cm
+Time: 1028 ms, Distance from camera at (291, 360): 213.6151123046875 cm
+Sent move forward command 7
+Time: 1045 ms, Distance from camera at (290, 360): 213.0770263671875 cm
+Time: 1062 ms, Distance from camera at (288, 360): 213.837158203125 cm
+Time: 1078 ms, Distance from camera at (339, 360): 210.3461151123047 cm
+Time: 1095 ms, Distance from camera at (283, 360): 212.39981079101562 cm
+Time: 1112 ms, Distance from camera at (674, 360): 132.4667510986328 cm
+Time: 1128 ms, Distance from camera at (674, 360): 134.7781524658203 cm
+Sent move forward command 7
+Time: 1145 ms, Distance from camera at (346, 360): 208.789794921875 cm
+Time: 1162 ms, Distance from camera at (671, 360): 135.61785888671875 cm
+Time: 1178 ms, Distance from camera at (669, 360): 137.48065185546875 cm
+Time: 1195 ms, Distance from camera at (671, 360): 133.34080505371094 cm
+Time: 1212 ms, Distance from camera at (341, 360): 212.5457763671875 cm
+Time: 1228 ms, Distance from camera at (347, 360): 209.81211853027344 cm
+Sent move forward command 6
+Time: 1245 ms, Distance from camera at (674, 360): 132.00933837890625 cm
+Time: 1262 ms, Distance from camera at (676, 360): 132.24569702148438 cm
+Time: 1278 ms, Distance from camera at (347, 360): 211.78807067871094 cm
+Time: 1295 ms, Distance from camera at (676, 360): 133.0806121826172 cm
+Time: 1312 ms, Distance from camera at (676, 360): 132.7122039794922 cm
+Time: 1328 ms, Distance from camera at (674, 360): 134.4767608642578 cm
+Sent move forward command 2
+Time: 1345 ms, Distance from camera at (674, 360): 133.40684509277344 cm
+Time: 1362 ms, Distance from camera at (288, 360): 212.2505340576172 cm
+Time: 1378 ms, Distance from camera at (674, 360): 133.63528442382812 cm
+Time: 1395 ms, Distance from camera at (676, 360): 133.72052001953125 cm
+Time: 1412 ms, Distance from camera at (342, 360): 212.60862731933594 cm
+Time: 1428 ms, Distance from camera at (676, 360): 134.14500427246094 cm
+Sent move forward command 2
+Time: 1445 ms, Distance from camera at (676, 360): 134.7715606689453 cm
+Time: 1462 ms, Distance from camera at (677, 360): 133.87184143066406 cm
+Time: 1478 ms, Distance from camera at (341, 360): 212.49014282226562 cm
+Time: 1495 ms, Distance from camera at (343, 360): 212.0747833251953 cm
+Time: 1511 ms, Distance from camera at (674, 360): 132.98558044433594 cm
+Time: 1528 ms, Distance from camera at (336, 360): 211.6768341064453 cm
+Sent move forward command 2
+Time: 1545 ms, Distance from camera at (674, 360): 134.64736938476562 cm
+Time: 1562 ms, Distance from camera at (674, 360): 134.00950622558594 cm
+Time: 1578 ms, Distance from camera at (674, 360): 134.1644287109375 cm
+Time: 1595 ms, Distance from camera at (672, 360): 133.18167114257812 cm
+Time: 1611 ms, Distance from camera at (671, 360): 133.638427734375 cm
+Time: 1628 ms, Distance from camera at (671, 360): 133.04928588867188 cm
+Sent move forward command 2
+Time: 1645 ms, Distance from camera at (282, 360): 213.3321075439453 cm
+Time: 1661 ms, Distance from camera at (283, 360): 213.69261169433594 cm
+Time: 1678 ms, Distance from camera at (341, 360): 213.0579071044922 cm
+Time: 1695 ms, Distance from camera at (283, 360): 212.94912719726562 cm
+Time: 1711 ms, Distance from camera at (337, 360): 212.7142791748047 cm
+Time: 1728 ms, Distance from camera at (342, 360): 212.5857391357422 cm
+Sent move forward command 7
+Time: 1745 ms, Distance from camera at (671, 360): 133.88070678710938 cm
+Time: 1762 ms, Distance from camera at (671, 360): 132.67027282714844 cm
+Time: 1778 ms, Distance from camera at (669, 360): 133.7873992919922 cm
+Time: 1795 ms, Distance from camera at (669, 360): 136.55718994140625 cm
+Time: 1812 ms, Distance from camera at (338, 360): 212.9911346435547 cm
+Time: 1828 ms, Distance from camera at (669, 360): 133.8891143798828 cm
+Sent move forward command 2
+Time: 1845 ms, Distance from camera at (669, 360): 134.77206420898438 cm
+Time: 1862 ms, Distance from camera at (669, 360): 133.83917236328125 cm
+Time: 1878 ms, Distance from camera at (669, 360): 135.0387420654297 cm
+Time: 1895 ms, Distance from camera at (671, 360): 135.2728729248047 cm
+Time: 1912 ms, Distance from camera at (667, 360): 136.19854736328125 cm
+Time: 1928 ms, Distance from camera at (667, 360): 134.7806854248047 cm
+Sent move forward command 2
+Time: 1945 ms, Distance from camera at (667, 360): 134.74351501464844 cm
+Time: 1962 ms, Distance from camera at (667, 360): 135.1106414794922 cm
+Time: 1978 ms, Distance from camera at (667, 360): 134.23727416992188 cm
+Time: 1995 ms, Distance from camera at (667, 360): 133.3079833984375 cm
+Time: 2012 ms, Distance from camera at (666, 360): 135.58370971679688 cm
+Time: 2028 ms, Distance from camera at (667, 360): 133.1266326904297 cm
+Sent move forward command 2
+Time: 2045 ms, Distance from camera at (268, 360): 210.1602020263672 cm
+Time: 2062 ms, Distance from camera at (666, 360): 134.22752380371094 cm
+Time: 2078 ms, Distance from camera at (268, 360): 210.1646728515625 cm
+Time: 2095 ms, Distance from camera at (667, 360): 132.35353088378906 cm
+Time: 2112 ms, Distance from camera at (666, 360): 131.72276306152344 cm
+Time: 2128 ms, Distance from camera at (268, 360): 209.4585723876953 cm
+Sent move forward command 6
+Time: 2145 ms, Distance from camera at (267, 360): 209.1493377685547 cm
+Time: 2162 ms, Distance from camera at (662, 360): 132.0856170654297 cm
+Time: 2178 ms, Distance from camera at (661, 360): 132.772705078125 cm
+Time: 2195 ms, Distance from camera at (260, 360): 207.5166778564453 cm
+Time: 2212 ms, Distance from camera at (659, 360): 132.64553833007812 cm
+Time: 2228 ms, Distance from camera at (256, 360): 206.8185577392578 cm
+Sent move forward command 6
+Time: 2245 ms, Distance from camera at (656, 360): 132.9316864013672 cm
+Time: 2262 ms, Distance from camera at (656, 360): 131.6395263671875 cm
+Time: 2278 ms, Distance from camera at (254, 360): 206.18186950683594 cm
+Time: 2295 ms, Distance from camera at (656, 360): 131.73475646972656 cm
+Time: 2312 ms, Distance from camera at (252, 360): 205.0364990234375 cm
+Time: 2328 ms, Distance from camera at (250, 360): 203.80931091308594 cm
+Sent move forward command 2
+Time: 2345 ms, Distance from camera at (247, 360): 203.08804321289062 cm
+Time: 2362 ms, Distance from camera at (245, 360): 201.8354949951172 cm
+Time: 2378 ms, Distance from camera at (245, 360): 201.0242156982422 cm
+Time: 2395 ms, Distance from camera at (242, 360): 200.69200134277344 cm
+Time: 2412 ms, Distance from camera at (431, 360): 185.47055053710938 cm
+Time: 2428 ms, Distance from camera at (655, 360): 129.0758514404297 cm
+Sent move forward command 6
+Time: 2445 ms, Distance from camera at (656, 360): 129.32159423828125 cm
+Time: 2462 ms, Distance from camera at (655, 360): 127.15592193603516 cm
+Time: 2478 ms, Distance from camera at (240, 360): 197.02574157714844 cm
+Time: 2495 ms, Distance from camera at (434, 360): 184.99481201171875 cm
+Time: 2512 ms, Distance from camera at (433, 360): 183.70274353027344 cm
+Time: 2528 ms, Distance from camera at (433, 360): 182.70753479003906 cm
+Sent move forward command 1
+Time: 2545 ms, Distance from camera at (431, 360): 177.67013549804688 cm
+Time: 2562 ms, Distance from camera at (33, 360): 185.71185302734375 cm
+Time: 2578 ms, Distance from camera at (428, 360): 177.5061492919922 cm
+Time: 2595 ms, Distance from camera at (230, 360): 189.94459533691406 cm
+Time: 2612 ms, Distance from camera at (34, 360): 185.03372192382812 cm
+Time: 2628 ms, Distance from camera at (425, 360): 175.5089874267578 cm
+Sent move forward command 4
+Time: 2645 ms, Distance from camera at (35, 360): 192.463623046875 cm
+Time: 2662 ms, Distance from camera at (425, 360): 181.28721618652344 cm
+Time: 2678 ms, Distance from camera at (227, 360): 190.94784545898438 cm
+Time: 2695 ms, Distance from camera at (33, 360): 189.74009704589844 cm
+Time: 2712 ms, Distance from camera at (224, 360): 189.7485809326172 cm
+Time: 2728 ms, Distance from camera at (225, 360): 188.84681701660156 cm
+Sent move forward command 5
+Time: 2745 ms, Distance from camera at (224, 360): 188.76316833496094 cm
+Time: 2762 ms, Distance from camera at (224, 360): 187.9623260498047 cm
+Time: 2778 ms, Distance from camera at (224, 360): 187.40538024902344 cm
+Time: 2795 ms, Distance from camera at (224, 360): 186.8928985595703 cm
+Time: 2812 ms, Distance from camera at (222, 360): 186.54771423339844 cm
+Time: 2828 ms, Distance from camera at (222, 360): 185.97703552246094 cm
+Sent move forward command 5
+Time: 2845 ms, Distance from camera at (222, 360): 186.26483154296875 cm
+Time: 2862 ms, Distance from camera at (222, 360): 186.44058227539062 cm
+Time: 2878 ms, Distance from camera at (220, 360): 186.3024139404297 cm
+Time: 2895 ms, Distance from camera at (221, 360): 185.6438446044922 cm
+Time: 2912 ms, Distance from camera at (221, 360): 185.23834228515625 cm
+Time: 2928 ms, Distance from camera at (220, 360): 184.6803436279297 cm
+Sent move forward command 5
+Time: 2945 ms, Distance from camera at (221, 360): 184.1092987060547 cm
+Time: 2962 ms, Distance from camera at (221, 360): 183.76918029785156 cm
+Time: 2978 ms, Distance from camera at (220, 360): 183.00828552246094 cm
+Time: 2995 ms, Distance from camera at (222, 360): 182.9143829345703 cm
+Time: 3012 ms, Distance from camera at (222, 360): 183.1831512451172 cm
+Time: 3028 ms, Distance from camera at (222, 360): 183.67666625976562 cm
+Sent move forward command 5
+Time: 3045 ms, Distance from camera at (221, 360): 184.45391845703125 cm
+Time: 3062 ms, Distance from camera at (219, 360): 184.98236083984375 cm
+Time: 3078 ms, Distance from camera at (217, 360): 185.33433532714844 cm
+Time: 3095 ms, Distance from camera at (216, 360): 184.0082244873047 cm
+Time: 3112 ms, Distance from camera at (215, 360): 183.38340759277344 cm
+Time: 3128 ms, Distance from camera at (214, 360): 182.46055603027344 cm
+Sent move forward command 5
+Time: 3145 ms, Distance from camera at (214, 360): 181.85400390625 cm
+Time: 3162 ms, Distance from camera at (214, 360): 182.24327087402344 cm
+Time: 3178 ms, Distance from camera at (212, 360): 181.76341247558594 cm
+Time: 3195 ms, Distance from camera at (211, 360): 181.18179321289062 cm
+Time: 3212 ms, Distance from camera at (211, 360): 180.67689514160156 cm
+Time: 3228 ms, Distance from camera at (210, 360): 180.2220001220703 cm
+Sent move forward command 5
+Time: 3245 ms, Distance from camera at (209, 360): 179.69308471679688 cm
+Time: 3262 ms, Distance from camera at (210, 360): 178.50022888183594 cm
+Time: 3278 ms, Distance from camera at (210, 360): 177.65789794921875 cm
+Time: 3295 ms, Distance from camera at (207, 360): 177.08604431152344 cm
+Time: 3312 ms, Distance from camera at (207, 360): 175.82591247558594 cm
+Time: 3328 ms, Distance from camera at (207, 360): 175.06764221191406 cm
+Sent move forward command 4
+Time: 3345 ms, Distance from camera at (209, 360): 174.2728729248047 cm
+Time: 3362 ms, Distance from camera at (207, 360): 174.14071655273438 cm
+Time: 3378 ms, Distance from camera at (207, 360): 173.08963012695312 cm
+Time: 3395 ms, Distance from camera at (206, 360): 172.27279663085938 cm
+Time: 3412 ms, Distance from camera at (206, 360): 171.30064392089844 cm
+Time: 3428 ms, Distance from camera at (205, 360): 170.64190673828125 cm
+Sent move forward command 4
+Time: 3445 ms, Distance from camera at (204, 360): 169.67832946777344 cm
+Time: 3462 ms, Distance from camera at (202, 360): 169.03448486328125 cm
+Time: 3478 ms, Distance from camera at (202, 360): 168.25331115722656 cm
+Time: 3495 ms, Distance from camera at (202, 360): 167.8979949951172 cm
+Time: 3512 ms, Distance from camera at (202, 360): 167.7268829345703 cm
+Time: 3528 ms, Distance from camera at (202, 360): 167.31442260742188 cm
+Sent move forward command 4
+Time: 3545 ms, Distance from camera at (202, 360): 166.9984130859375 cm
+Time: 3562 ms, Distance from camera at (202, 360): 166.70907592773438 cm
+Time: 3578 ms, Distance from camera at (200, 360): 166.33763122558594 cm
+Time: 3595 ms, Distance from camera at (200, 360): 165.837158203125 cm
+Time: 3612 ms, Distance from camera at (200, 360): 165.42823791503906 cm
+Time: 3628 ms, Distance from camera at (202, 360): 165.93734741210938 cm
+Sent move forward command 4
+Time: 3645 ms, Distance from camera at (204, 360): 165.83798217773438 cm
+Time: 3662 ms, Distance from camera at (204, 360): 165.697509765625 cm
+Time: 3678 ms, Distance from camera at (202, 360): 164.88523864746094 cm
+Time: 3695 ms, Distance from camera at (202, 360): 164.03106689453125 cm
+Time: 3712 ms, Distance from camera at (202, 360): 164.2733154296875 cm
+Time: 3728 ms, Distance from camera at (202, 360): 164.41050720214844 cm
+Sent move forward command 4
+Time: 3745 ms, Distance from camera at (202, 360): 164.49166870117188 cm
+Time: 3762 ms, Distance from camera at (202, 360): 164.3411102294922 cm
+Time: 3778 ms, Distance from camera at (200, 360): 163.32725524902344 cm
+Time: 3795 ms, Distance from camera at (200, 360): 162.52920532226562 cm
+Time: 3812 ms, Distance from camera at (199, 360): 162.6385955810547 cm
+Time: 3828 ms, Distance from camera at (199, 360): 162.6561279296875 cm
+Sent move forward command 4
+Time: 3845 ms, Distance from camera at (199, 360): 162.56243896484375 cm
+Time: 3862 ms, Distance from camera at (199, 360): 162.17068481445312 cm
+Time: 3878 ms, Distance from camera at (199, 360): 161.63882446289062 cm
+Time: 3895 ms, Distance from camera at (199, 360): 160.9589080810547 cm
+Time: 3912 ms, Distance from camera at (199, 360): 160.36021423339844 cm
+Time: 3928 ms, Distance from camera at (199, 360): 160.5779266357422 cm
+Sent move forward command 3
+Time: 3945 ms, Distance from camera at (199, 360): 160.15811157226562 cm
+Time: 3962 ms, Distance from camera at (199, 360): 160.269775390625 cm
+Time: 3978 ms, Distance from camera at (199, 360): 160.18618774414062 cm
+Time: 3995 ms, Distance from camera at (199, 360): 159.41928100585938 cm
+Time: 4012 ms, Distance from camera at (199, 360): 159.19407653808594 cm
+Time: 4028 ms, Distance from camera at (199, 360): 158.9619140625 cm
+Sent move forward command 3
+Time: 4045 ms, Distance from camera at (199, 360): 158.1200408935547 cm
+Time: 4062 ms, Distance from camera at (200, 360): 158.6577911376953 cm
+Time: 4078 ms, Distance from camera at (200, 360): 158.39219665527344 cm
+Time: 4095 ms, Distance from camera at (200, 360): 158.3599090576172 cm
+Time: 4112 ms, Distance from camera at (200, 360): 157.46087646484375 cm
+Time: 4128 ms, Distance from camera at (200, 360): 157.162109375 cm
+Sent move forward command 3
+Time: 4145 ms, Distance from camera at (199, 360): 155.68638610839844 cm
+Time: 4162 ms, Distance from camera at (199, 360): 155.81912231445312 cm
+Time: 4178 ms, Distance from camera at (199, 360): 155.20040893554688 cm
+Time: 4195 ms, Distance from camera at (199, 360): 156.49526977539062 cm
+Time: 4212 ms, Distance from camera at (200, 360): 156.46571350097656 cm
+Time: 4228 ms, Distance from camera at (200, 360): 157.27835083007812 cm
+Sent move forward command 3
+Time: 4245 ms, Distance from camera at (199, 360): 155.04464721679688 cm
+Time: 4262 ms, Distance from camera at (197, 360): 151.5546417236328 cm
+Time: 4278 ms, Distance from camera at (195, 360): 151.09381103515625 cm
+Time: 4295 ms, Distance from camera at (195, 360): 151.06394958496094 cm
+Time: 4312 ms, Distance from camera at (193, 360): 151.411865234375 cm
+Time: 4328 ms, Distance from camera at (192, 360): 151.2606658935547 cm
+Sent move forward command 3
+Time: 4345 ms, Distance from camera at (190, 360): 151.69056701660156 cm
+Time: 4362 ms, Distance from camera at (187, 360): 150.8221893310547 cm
+Time: 4378 ms, Distance from camera at (187, 360): 149.46583557128906 cm
+Time: 4395 ms, Distance from camera at (73, 360): 97.3650131225586 cm
+Time: 4445 ms, Distance from camera at (191, 360): 145.2163848876953 cm
+Robot stopping
+Time: 4462 ms, Distance from camera at (202, 360): 143.68804931640625 cm
+Time: 4478 ms, Distance from camera at (197, 360): 142.67723083496094 cm
+Time: 4495 ms, Distance from camera at (174, 360): 141.69577026367188 cm
+Time: 4512 ms, Distance from camera at (185, 360): 141.39305114746094 cm
+Time: 4528 ms, Distance from camera at (182, 360): 141.03526306152344 cm
+Time: 4545 ms, Distance from camera at (182, 360): 141.28086853027344 cm
+Time: 4562 ms, Distance from camera at (184, 360): 141.21142578125 cm
+Time: 4578 ms, Distance from camera at (180, 360): 141.40513610839844 cm
+Time: 4595 ms, Distance from camera at (186, 360): 141.77700805664062 cm
+Time: 4612 ms, Distance from camera at (177, 360): 141.99656677246094 cm
+Robot stopping
+Time: 4628 ms, Distance from camera at (204, 360): 141.87643432617188 cm
+Time: 4645 ms, Distance from camera at (202, 360): 141.6166534423828 cm
+Time: 4662 ms, Distance from camera at (92, 360): 86.25149536132812 cm
+Time: 4678 ms, Distance from camera at (89, 360): 84.9462890625 cm
+Time: 4695 ms, Distance from camera at (91, 360): 85.49757385253906 cm
+Time: 4712 ms, Distance from camera at (88, 360): 86.50358581542969 cm
+Time: 4728 ms, Distance from camera at (88, 360): 87.00189971923828 cm
+Time: 4745 ms, Distance from camera at (83, 360): 88.87098693847656 cm
+Time: 4762 ms, Distance from camera at (193, 360): 136.7400665283203 cm
+Time: 4778 ms, Distance from camera at (80, 360): 86.22081756591797 cm
+Robot stopping
+Time: 4795 ms, Distance from camera at (193, 360): 135.78115844726562 cm
+Time: 4812 ms, Distance from camera at (164, 360): 132.97837829589844 cm
+Time: 4828 ms, Distance from camera at (161, 360): 132.2749786376953 cm
+Time: 4845 ms, Distance from camera at (160, 360): 131.7042236328125 cm
+Time: 4862 ms, Distance from camera at (155, 360): 130.5830841064453 cm
+Time: 4878 ms, Distance from camera at (155, 360): 130.3002166748047 cm
+Time: 4895 ms, Distance from camera at (155, 360): 130.3219451904297 cm
+Time: 4912 ms, Distance from camera at (154, 360): 130.1283721923828 cm
+Time: 4928 ms, Distance from camera at (156, 360): 130.1211700439453 cm
+Time: 4945 ms, Distance from camera at (157, 360): 130.26060485839844 cm
+Robot stopping
+Time: 4962 ms, Distance from camera at (159, 360): 130.45347595214844 cm
+Time: 4978 ms, Distance from camera at (159, 360): 130.3419189453125 cm
+Time: 4995 ms, Distance from camera at (159, 360): 130.0218505859375 cm
+Time: 5012 ms, Distance from camera at (160, 360): 130.1597442626953 cm
+Time: 5028 ms, Distance from camera at (160, 360): 130.3742218017578 cm
+Time: 5045 ms, Distance from camera at (161, 360): 130.41075134277344 cm
+Time: 5062 ms, Distance from camera at (162, 360): 130.13623046875 cm
+Time: 5078 ms, Distance from camera at (161, 360): 129.7034149169922 cm
+Time: 5095 ms, Distance from camera at (162, 360): 129.10171508789062 cm
+Time: 5112 ms, Distance from camera at (164, 360): 129.48849487304688 cm
+Robot stopping
+Time: 5128 ms, Distance from camera at (165, 360): 129.53758239746094 cm
+Time: 5145 ms, Distance from camera at (165, 360): 129.7954864501953 cm
+Time: 5162 ms, Distance from camera at (165, 360): 129.54063415527344 cm
+Time: 5178 ms, Distance from camera at (165, 360): 129.19284057617188 cm
+Time: 5195 ms, Distance from camera at (164, 360): 128.72299194335938 cm
+Time: 5212 ms, Distance from camera at (164, 360): 128.33155822753906 cm
+Time: 5228 ms, Distance from camera at (162, 360): 127.77928924560547 cm
+Time: 5245 ms, Distance from camera at (162, 360): 127.68468475341797 cm
+Time: 5262 ms, Distance from camera at (163, 360): 127.61002349853516 cm
+Time: 5278 ms, Distance from camera at (164, 360): 127.46577453613281 cm
+Robot stopping
+Time: 5295 ms, Distance from camera at (165, 360): 127.70824432373047 cm
+Time: 5312 ms, Distance from camera at (165, 360): 127.47115325927734 cm
+Time: 5328 ms, Distance from camera at (164, 360): 126.87601470947266 cm
+Time: 5345 ms, Distance from camera at (160, 360): 126.2485580444336 cm
+Time: 5362 ms, Distance from camera at (157, 360): 125.63799285888672 cm
+Time: 5378 ms, Distance from camera at (154, 360): 124.7794418334961 cm
+Time: 5395 ms, Distance from camera at (152, 360): 123.72594451904297 cm
+Time: 5412 ms, Distance from camera at (150, 360): 123.13375091552734 cm
+Time: 5428 ms, Distance from camera at (149, 360): 122.79298400878906 cm
+Time: 5445 ms, Distance from camera at (148, 360): 122.7639389038086 cm
+Robot stopping
+Time: 5462 ms, Distance from camera at (148, 360): 122.47589111328125 cm
+Time: 5478 ms, Distance from camera at (147, 360): 121.92742919921875 cm
+Time: 5495 ms, Distance from camera at (145, 360): 121.21598052978516 cm
+Time: 5512 ms, Distance from camera at (142, 360): 120.18312072753906 cm
+Time: 5529 ms, Distance from camera at (140, 360): 119.5013427734375 cm
+Time: 5545 ms, Distance from camera at (138, 360): 118.69219970703125 cm
+Time: 5562 ms, Distance from camera at (137, 360): 117.75139617919922 cm
+Time: 5579 ms, Distance from camera at (136, 360): 116.88297271728516 cm
+Time: 5595 ms, Distance from camera at (135, 360): 116.48308563232422 cm
+Time: 5612 ms, Distance from camera at (133, 360): 115.69315338134766 cm
+Robot stopping
+Time: 5629 ms, Distance from camera at (123, 360): 115.12816619873047 cm
+Time: 5645 ms, Distance from camera at (128, 360): 114.63789367675781 cm
+Time: 5662 ms, Distance from camera at (122, 360): 113.73409271240234 cm
+Time: 5679 ms, Distance from camera at (119, 360): 112.5229263305664 cm
+Time: 5695 ms, Distance from camera at (121, 360): 112.20304107666016 cm
+Time: 5712 ms, Distance from camera at (112, 360): 110.68733215332031 cm
+Time: 5729 ms, Distance from camera at (110, 360): 109.95238494873047 cm
+Time: 5745 ms, Distance from camera at (107, 360): 109.27156829833984 cm
+Time: 5762 ms, Distance from camera at (103, 360): 109.27910614013672 cm
+Time: 5779 ms, Distance from camera at (109, 360): 108.36480712890625 cm
+Robot stopping
+Time: 5795 ms, Distance from camera at (108, 360): 108.02803802490234 cm
+Time: 5812 ms, Distance from camera at (100, 360): 106.92052459716797 cm
+Time: 5829 ms, Distance from camera at (106, 360): 108.0402603149414 cm
+Time: 5845 ms, Distance from camera at (98, 360): 107.43476867675781 cm
+Time: 5862 ms, Distance from camera at (105, 360): 107.5972671508789 cm
+Time: 5879 ms, Distance from camera at (106, 360): 107.4769287109375 cm
+Time: 5895 ms, Distance from camera at (107, 360): 107.12175750732422 cm
+Time: 5912 ms, Distance from camera at (103, 360): 107.44103240966797 cm
+Time: 5929 ms, Distance from camera at (106, 360): 106.16448974609375 cm
+Time: 5945 ms, Distance from camera at (107, 360): 106.4825439453125 cm
+Robot stopping
+Time: 5962 ms, Distance from camera at (98, 360): 104.87847900390625 cm
+Time: 5978 ms, Distance from camera at (102, 360): 104.4905776977539 cm
+Time: 5995 ms, Distance from camera at (100, 360): 104.86322021484375 cm
+Time: 6012 ms, Distance from camera at (100, 360): 105.1932601928711 cm
+Time: 6028 ms, Distance from camera at (100, 360): 107.0982894897461 cm
+Time: 6045 ms, Distance from camera at (98, 360): 106.42642974853516 cm
+Time: 6062 ms, Distance from camera at (95, 360): 107.4942855834961 cm
+Time: 6078 ms, Distance from camera at (91, 360): 113.27120208740234 cm
+Time: 6095 ms, Distance from camera at (38, 360): 495.4623107910156 cm
+Time: 6112 ms, Distance from camera at (482, 360): 74.78665161132812 cm
+Robot stopping
+Time: 6128 ms, Distance from camera at (467, 360): 73.9347152709961 cm
+Time: 6145 ms, Distance from camera at (450, 360): 73.6939926147461 cm
+Time: 6162 ms, Distance from camera at (432, 360): 72.49837493896484 cm
+Time: 6178 ms, Distance from camera at (435, 360): 72.33101654052734 cm
+Time: 6195 ms, Distance from camera at (423, 360): 72.20936584472656 cm
+Time: 6212 ms, Distance from camera at (427, 360): 71.31649780273438 cm
+Time: 6228 ms, Distance from camera at (428, 360): 70.26192474365234 cm
+Time: 6245 ms, Distance from camera at (425, 360): 69.13587188720703 cm
+Time: 6262 ms, Distance from camera at (423, 360): 68.8975601196289 cm
+Time: 6278 ms, Distance from camera at (418, 360): 68.4815902709961 cm
+Robot stopping
+Time: 6295 ms, Distance from camera at (412, 360): 68.6001968383789 cm
+Time: 6312 ms, Distance from camera at (410, 360): 68.79943084716797 cm
+Time: 6328 ms, Distance from camera at (410, 360): 68.6948471069336 cm
+Time: 6345 ms, Distance from camera at (408, 360): 68.80764770507812 cm
+Time: 6362 ms, Distance from camera at (405, 360): 69.19367218017578 cm
+Time: 6378 ms, Distance from camera at (407, 360): 68.00154113769531 cm
+Time: 6395 ms, Distance from camera at (408, 360): 67.49980926513672 cm
+Time: 6412 ms, Distance from camera at (404, 360): 67.12248229980469 cm
+Time: 6428 ms, Distance from camera at (403, 360): 68.9708480834961 cm
+Time: 6445 ms, Distance from camera at (402, 360): 67.19232177734375 cm
+Robot stopping
+Time: 6462 ms, Distance from camera at (400, 360): 67.53123474121094 cm
+Time: 6478 ms, Distance from camera at (85, 360): 264.00634765625 cm
+Time: 6495 ms, Distance from camera at (402, 360): 66.43135833740234 cm
+Time: 6512 ms, Distance from camera at (455, 360): 67.37782287597656 cm
+Time: 6529 ms, Distance from camera at (446, 360): 66.68968200683594 cm
+Time: 6545 ms, Distance from camera at (438, 360): 66.44755554199219 cm
+Time: 6562 ms, Distance from camera at (396, 360): 64.62276458740234 cm
+Time: 6578 ms, Distance from camera at (463, 360): 66.78047180175781 cm
+Time: 6595 ms, Distance from camera at (388, 360): 63.167755126953125 cm
+Time: 6612 ms, Distance from camera at (56, 360): 276.5556640625 cm
+Robot stopping
+Time: 6628 ms, Distance from camera at (453, 360): 65.21794128417969 cm
+Time: 6645 ms, Distance from camera at (451, 360): 64.9120101928711 cm
+Time: 6662 ms, Distance from camera at (390, 360): 63.06658935546875 cm
+Time: 6678 ms, Distance from camera at (392, 360): 62.0891227722168 cm
+Time: 6695 ms, Distance from camera at (429, 360): 63.13033676147461 cm
+Time: 6712 ms, Distance from camera at (397, 360): 63.09663772583008 cm
+Time: 6728 ms, Distance from camera at (453, 360): 64.21302032470703 cm
+Time: 6745 ms, Distance from camera at (404, 360): 60.8437614440918 cm
+Time: 6762 ms, Distance from camera at (461, 360): 63.89032745361328 cm
+Time: 6778 ms, Distance from camera at (442, 360): 62.48488235473633 cm
+Robot stopping
+Time: 6795 ms, Distance from camera at (402, 360): 60.506446838378906 cm
+Time: 6812 ms, Distance from camera at (404, 360): 60.14236068725586 cm
+Time: 6828 ms, Distance from camera at (438, 360): 61.708709716796875 cm
+Time: 6845 ms, Distance from camera at (403, 360): 59.66809844970703 cm
+Time: 6862 ms, Distance from camera at (76, 360): 186.07005310058594 cm
+Time: 6878 ms, Distance from camera at (407, 360): 60.21417999267578 cm
+Time: 6895 ms, Distance from camera at (409, 360): 60.73059844970703 cm
+Time: 6912 ms, Distance from camera at (462, 360): 62.1487922668457 cm
+Time: 6929 ms, Distance from camera at (412, 360): 60.86602783203125 cm
+Time: 6945 ms, Distance from camera at (419, 360): 60.701454162597656 cm
+Robot stopping
+Time: 6962 ms, Distance from camera at (30, 360): 425.6595764160156 cm
+Time: 6979 ms, Distance from camera at (450, 360): 60.91069412231445 cm
+Time: 6995 ms, Distance from camera at (467, 360): 61.56189727783203 cm
+Time: 7012 ms, Distance from camera at (497, 360): 63.097747802734375 cm
+Time: 7028 ms, Distance from camera at (102, 360): 90.2675552368164 cm
+Time: 7045 ms, Distance from camera at (82, 360): 233.933837890625 cm
+Time: 7062 ms, Distance from camera at (420, 360): 60.05873489379883 cm
+Time: 7078 ms, Distance from camera at (486, 360): 61.803070068359375 cm
+Time: 7095 ms, Distance from camera at (485, 360): 62.0421028137207 cm
+Time: 7112 ms, Distance from camera at (480, 360): 61.77798080444336 cm
+Robot stopping
+Time: 7128 ms, Distance from camera at (489, 360): 62.380462646484375 cm
+Time: 7145 ms, Distance from camera at (71, 360): 208.1279754638672 cm
+Time: 7162 ms, Distance from camera at (485, 360): 61.45953369140625 cm
+Time: 7178 ms, Distance from camera at (414, 360): 59.643184661865234 cm
+Time: 7195 ms, Distance from camera at (495, 360): 62.095916748046875 cm
+Time: 7212 ms, Distance from camera at (478, 360): 61.1937255859375 cm
+Time: 7229 ms, Distance from camera at (510, 360): 62.742835998535156 cm
+Time: 7245 ms, Distance from camera at (435, 360): 60.199764251708984 cm
+Time: 7262 ms, Distance from camera at (489, 360): 61.675045013427734 cm
+Time: 7278 ms, Distance from camera at (490, 360): 61.85734176635742 cm
+Robot stopping
+Time: 7295 ms, Distance from camera at (476, 360): 60.853023529052734 cm
+Time: 7312 ms, Distance from camera at (61, 360): 206.19204711914062 cm
+Time: 7329 ms, Distance from camera at (425, 360): 59.408565521240234 cm
+Time: 7345 ms, Distance from camera at (469, 360): 60.30768966674805 cm
+Time: 7362 ms, Distance from camera at (461, 360): 59.88142013549805 cm
+Time: 7379 ms, Distance from camera at (478, 360): 60.56492233276367 cm
+Time: 7395 ms, Distance from camera at (489, 360): 61.34804916381836 cm
+Time: 7412 ms, Distance from camera at (485, 360): 60.9509391784668 cm
+Time: 7429 ms, Distance from camera at (483, 360): 61.15022659301758 cm
+Time: 7445 ms, Distance from camera at (464, 360): 60.305599212646484 cm
+Robot stopping
+Time: 7462 ms, Distance from camera at (482, 360): 60.740291595458984 cm
+Time: 7479 ms, Distance from camera at (470, 360): 60.45404052734375 cm
+Time: 7495 ms, Distance from camera at (487, 360): 61.087093353271484 cm
+Time: 7512 ms, Distance from camera at (456, 360): 59.8950080871582 cm
+Time: 7529 ms, Distance from camera at (445, 360): 60.11924362182617 cm
+Time: 7545 ms, Distance from camera at (432, 360): 59.253658294677734 cm
+Time: 7562 ms, Distance from camera at (434, 360): 59.25990676879883 cm
+Time: 7579 ms, Distance from camera at (482, 360): 61.01485061645508 cm
+Time: 7595 ms, Distance from camera at (433, 360): 59.44550704956055 cm
+Time: 7612 ms, Distance from camera at (484, 360): 61.107269287109375 cm
+Robot stopping
+Time: 7629 ms, Distance from camera at (494, 360): 61.6994514465332 cm
+Time: 7645 ms, Distance from camera at (482, 360): 61.11260986328125 cm
+Time: 7662 ms, Distance from camera at (500, 360): 62.140594482421875 cm
+Time: 7679 ms, Distance from camera at (486, 360): 61.47332763671875 cm
+Time: 7695 ms, Distance from camera at (509, 360): 62.73373031616211 cm
+Time: 7712 ms, Distance from camera at (497, 360): 62.294769287109375 cm
+Time: 7729 ms, Distance from camera at (506, 360): 62.60254669189453 cm
+Time: 7745 ms, Distance from camera at (497, 360): 62.348140716552734 cm
+Time: 7762 ms, Distance from camera at (512, 360): 62.80989456176758 cm
+Time: 7779 ms, Distance from camera at (500, 360): 62.32389450073242 cm
+Robot stopping
+Time: 7795 ms, Distance from camera at (493, 360): 62.08811569213867 cm
+Time: 7812 ms, Distance from camera at (485, 360): 61.5883674621582 cm
+Time: 7829 ms, Distance from camera at (507, 360): 62.82953643798828 cm
+Time: 7845 ms, Distance from camera at (504, 360): 62.738494873046875 cm
+Time: 7862 ms, Distance from camera at (492, 360): 62.37446212768555 cm
+Time: 7879 ms, Distance from camera at (514, 360): 63.35819625854492 cm
+Time: 7895 ms, Distance from camera at (495, 360): 62.514827728271484 cm
+Time: 7912 ms, Distance from camera at (495, 360): 62.63324737548828 cm
+Time: 7928 ms, Distance from camera at (500, 360): 62.763336181640625 cm
+Time: 7945 ms, Distance from camera at (484, 360): 62.101985931396484 cm
+Robot stopping
+Time: 7962 ms, Distance from camera at (498, 360): 62.78485870361328 cm
+Time: 7978 ms, Distance from camera at (493, 360): 62.7412109375 cm
+Time: 7995 ms, Distance from camera at (507, 360): 63.08461380004883 cm
