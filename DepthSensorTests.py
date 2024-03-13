@@ -34,10 +34,10 @@ COMMAND_SEND_PERIOD_MS = 100
 
 # TODO: delete after testing
 '''
-Decreases the robot's speed as it approaches obstacle
+Decreases the robot's speed gradually as it approaches obstacle
 (decreases linearly from MAX_FORWARD_SPEED at MAX_OBSTACLE_DEPTH_CM to 0 at MIN_THRESHOLD_DISTANCE_CM)
 '''
-USE_SLOWDOWN_FEATURE = True  # Set to True to enable, or False to disable (if it doesn't work properly)
+USE_SLOWDOWN_FEATURE = True  # TODO: set to True to enable, or False to disable (if it doesn't work properly)
 
 # miscellaneous
 PROGRAM_START_TIME_MS = None  # reference start time of tests (in ms) after initialization
@@ -240,7 +240,8 @@ def moveForwardUntilSignaled(motor, stop_event, output_file_descriptor, write_ou
 
         if motor is not None:
             motor.forward(speed)
-        writeToStdoutAndFile(output_file_descriptor, "Sent move forward command {0}\n".format(speed), write_output_lock)
+        writeToStdoutAndFile(output_file_descriptor, "Sent move forward command with speed = {0}\n".format(speed),
+            write_output_lock)
         time.sleep(COMMAND_SEND_PERIOD_MS / MS_PER_SEC)
 
 
@@ -312,7 +313,8 @@ def moveForwardAndStopTest(motor, zed):
     counter = 0  # used to periodically remind that robot is stopping in the output
     try:
         while not collisionFlag:
-            depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters(), outputFile.fileno())[0]
+            depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters(),
+                outputFile.fileno())[0]
             if depthValue <= 0 or counter == 0:
                 if depthValue > 0:
                     writeToStdoutAndFile(outputFile.fileno(), "Robot stopping\n")
