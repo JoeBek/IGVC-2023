@@ -1,5 +1,5 @@
 """
-Module for autonomous controls based on object and line detection.
+Module for controlling robot autonomously based on object and line detection.
 
 Authors: Harrison, Shreya
 Date: March 23, 2024
