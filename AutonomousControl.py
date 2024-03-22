@@ -55,16 +55,24 @@ def avoidObstacle():
 # ======================================================================================================================
 
 def avoidLineAndObstacle():
+    """
+    Decides which direction robot should move based on combined information from line and object detection.
+
+    :return: direction to move toward (as a Direction enum)
+    """
     directionAwayFromLine, distanceFromLine = avoidLine()  # direction to move away from line
     directionAwayFromObstacle, distanceFromObstacle = avoidObstacle()  # direction to move away from obstacle
 
     directionToMove = Direction.FORWARD
+    # agreement on which direction to move toward
     if directionAwayFromLine == directionAwayFromObstacle:
         directionToMove = directionAwayFromLine
+    # only one of line or obstacle to avoid
     elif directionAwayFromLine == Direction.FORWARD:
         directionToMove = directionAwayFromObstacle
     elif directionAwayFromObstacle == Direction.FORWARD:
         directionToMove = directionAwayFromLine
+    # disagreement on which direction to move toward
     elif ((directionAwayFromLine == Direction.LEFT and directionAwayFromObstacle == Direction.RIGHT) or
           (directionAwayFromLine == Direction.RIGHT and directionAwayFromObstacle == Direction.LEFT)):
         if distanceFromObstacle < distanceFromLine:
