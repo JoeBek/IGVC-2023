@@ -18,26 +18,19 @@ import os
 import queue
 
 # how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
-MIN_THRESHOLD_DISTANCE_CM = 100
-MAX_THRESHOLD_DISTANCE_CM = 125
+MIN_THRESHOLD_DISTANCE_CM = 300
+MAX_THRESHOLD_DISTANCE_CM = 325
 
 # lower and upper bounds on depth values (in cm) to consider for obstacle detection; for captureImages...() functions
 MIN_OBSTACLE_DEPTH_CM = 0
 MAX_OBSTACLE_DEPTH_CM = 500
 
 # speed settings for motor controls
-MAX_FORWARD_SPEED = 25
+FORWARD_SPEED = 25
 TURNING_SPEED = 10
 
 # how often to send the same move/turn command to robot (in ms between commands) to make it do the same thing overtime
 COMMAND_SEND_PERIOD_MS = 100
-
-# TODO: delete after testing
-'''
-Decreases the robot's speed gradually as it approaches obstacle
-(decreases linearly from MAX_FORWARD_SPEED at MAX_OBSTACLE_DEPTH_CM to 0 at MIN_THRESHOLD_DISTANCE_CM)
-'''
-USE_SLOWDOWN_FEATURE = True  # TODO: set to True to enable, or False to disable (if it doesn't work properly)
 
 # miscellaneous
 PROGRAM_START_TIME_MS = None  # reference start time of tests (in ms) after initialization
@@ -166,10 +159,6 @@ def captureImagesUntilCloseToObstacle(zed, outputFileDescriptor, writeOutputLock
     while depthValue is None or depthValue > MIN_THRESHOLD_DISTANCE_CM:
         depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtimeParameters,
             outputFileDescriptor, writeOutputLock)
-        if USE_SLOWDOWN_FEATURE:
-            if pipe_empty_event.is_set():
-                parent_connection.send(depthValue)
-                pipe_empty_event.clear()
 
     return x, y, leftImage
 
@@ -223,21 +212,8 @@ def moveForwardUntilSignaled(motor, stop_event, output_file_descriptor, write_ou
     :param write_output_lock: lock used to protect writing output when using multiprocessing
     :param child_connection: the end of pipe to receive depth sensor data from
     """
-    speed = MAX_FORWARD_SPEED
+    speed = FORWARD_SPEED
     while not stop_event.is_set():
-        if USE_SLOWDOWN_FEATURE and child_connection is not None and pipe_empty_event is not None:
-            if not pipe_empty_event.is_set():
-                depthValue = child_connection.recv()  # should not block since pipe already checked to be nonempty
-                pipe_empty_event.set()
-
-                # updates speed based on received depthValue
-                speed = int((1.0 * MAX_FORWARD_SPEED) / (MAX_OBSTACLE_DEPTH_CM - MIN_THRESHOLD_DISTANCE_CM) *
-                    (depthValue - MIN_THRESHOLD_DISTANCE_CM))
-                if speed < 0:
-                    speed = 0
-                elif speed > MAX_FORWARD_SPEED:
-                    speed = MAX_FORWARD_SPEED
-
         if motor is not None:
             motor.forward(speed)
         writeToStdoutAndFile(output_file_descriptor, "Sent move forward command with speed = {0}\n".format(speed),
@@ -264,7 +240,6 @@ def initializationForTest(motor_com_port=None):
     init_params = sl.InitParameters()
     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
     init_params.coordinate_units = sl.UNIT.CENTIMETER
-    init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
 
     # opens the camera
     error = zed.open(init_params)
@@ -329,183 +304,16 @@ def moveForwardAndStopTest(motor, zed):
     outputFile.close()
 
 
-def turnLeftAndStopTest(motor, zed):
-    """
-    Test run in which the robot turns left and stops when it detects no close obstacle in front of it.
-    """
-    # turns robot left
-    if motor is not None:
-        motor.turnLeft(TURNING_SPEED)
-    print("Robot turning left")
-
-    # keeps turning left until it sees no close obstacle in front of it
-    captureImagesUntilClear(zed)
-
-    # stops robot
-    if motor is not None:
-        motor.stop()
-    print("Robot has stopped")
-
-
-def turnRightAndStopTest(motor, zed):
-    """
-    Test run in which the robot turns right and stops when it detects no close obstacle in front of it.
-    """
-    # turns robot right
-    if motor is not None:
-        motor.turnRight(TURNING_SPEED)
-    print("Robot turning right")
-
-    # keeps turning right until it sees no close obstacle in front of it
-    captureImagesUntilClear(zed)
-
-    # stops robot
-    if motor is not None:
-        motor.stop()
-    print("Robot has stopped")
-
-
-def steerAwayFromObstacleTest(motor, zed):
-    """
-    Test run in which the robot steers away from obstacle as the robot approaches the obstacle.
-    """
-    # moves robot forward
-    if motor is not None:
-        motor.forward(MAX_FORWARD_SPEED)
-    print("Robot moving forward")
-
-    # stops robot when close to obstacle
-    obstacleX, obstacleY, imageWithCloseObstacle = captureImagesUntilCloseToObstacle(zed)
-    if motor is not None:
-        motor.stop()
-    print("Robot has stopped")
-
-    # chooses direction in which to turn robot to dodge obstacle
-    centerX = imageWithCloseObstacle.get_width() / 2
-    if obstacleX < centerX:  # obstacle on left side
-        if motor is not None:
-            motor.turnRight(TURNING_SPEED)
-        print("Robot turning right")
-    else:  # obstacle on right side
-        if motor is not None:
-            motor.turnLeft(TURNING_SPEED)
-        print("Robot turning left")
-
-    # stops robot when it is clear
-    captureImagesUntilClear(zed)
-    if motor is not None:
-        motor.stop()
-    print("Robot has stopped")
-
-    # moves robot forward
-    if motor is not None:
-        motor.forward(MAX_FORWARD_SPEED)
-    print("Robot moving forward")
-
-    # stops robot when it is clear
-    captureImagesUntilCloseToObstacle(zed)
-    if motor is not None:
-        motor.stop()
-    print("Robot has stopped")
-
-
-def zigzagDownCorridorTest(motor, zed):
-    """
-    Test run in which robot navigates down corridor with small obstacles in the way
-    """
-    # initialization
-    tracking_parameters = sl.PositionalTrackingParameters()
-    err = zed.enable_positional_tracking(tracking_parameters)
-    if err != sl.ERROR_CODE.SUCCESS:
-        exit(1)
-    zed_pose = sl.Pose()
-    runtime_parameters = sl.RuntimeParameters()
-
-    # gets initial pose data
-    initialTranslationData = None
-    if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-        # gets the pose of the left eye of the camera with reference to the world frame
-        zed.get_position(zed_pose, sl.REFERENCE_FRAME.WORLD)
-        initialTranslation = zed_pose.get_translation()
-        initialTranslationData = initialTranslation.get()
-
-    # lets robot travel until it is at least 1000 cm away from start position
-    distanceFromStart = 0
-    while distanceFromStart < 1000:
-        # moves robot forward
-        if motor is not None:
-            motor.forward(MAX_FORWARD_SPEED)
-        print("Robot moving forward")
-
-        # stops robot when close to obstacle
-        obstacleX, obstacleY, imageWithCloseObstacle = captureImagesUntilCloseToObstacle(zed)
-        if motor is not None:
-            motor.stop()
-        print("Robot has stopped")
-
-        # chooses direction in which to turn robot to dodge obstacle
-        centerX = imageWithCloseObstacle.get_width() / 2
-        if obstacleX < centerX:  # obstacle on left side
-            if motor is not None:
-                motor.turnRight(TURNING_SPEED)
-            print("Robot turning right")
-        else:  # obstacle on right side
-            if motor is not None:
-                motor.turnLeft(TURNING_SPEED)
-            print("Robot turning left")
-
-        # stops robot when it is clear
-        captureImagesUntilClear(zed)
-        if motor is not None:
-            motor.stop()
-        print("Robot has stopped")
-
-        # updates distance from start
-        if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-            zed.get_position(zed_pose, sl.REFERENCE_FRAME.WORLD)
-            currentTranslation = zed_pose.get_translation()
-            currentTranslationData = currentTranslation.get()
-            distanceFromStart = abs(initialTranslationData[0] - currentTranslationData[0])
-            print("Distance from start: {0}".format(distanceFromStart))
-
-
-# TODO: delete later
-def miscellaneousFileWritingAndMultiprocessingTest():
-    """
-    Test writing to stdout and file with multiprocessing. Output printed in "sample.txt".
-    """
-    file = open("sample.txt", "w")
-    lock = multiprocessing.Lock()
-    event = multiprocessing.Event()
-    process = multiprocessing.Process(target=moveForwardUntilSignaled, args=(None, event, file.fileno(), lock))
-    process.start()
-    for i in range(3, 0, -1):
-        writeToStdoutAndFile(file.fileno(), "{0} sec left...\n".format(i), lock)
-        time.sleep(1)
-    event.set()
-    process.join()
-    writeToStdoutAndFile(file.fileno(), "Time's up!\n")
-    file.close()
-
-
 # ======================================================================================================================
 
 
 if __name__ == "__main__":
-    # TODO: delete later
-    # miscellaneousFileWritingAndMultiprocessingTest()
-
     # initialization
     motorForTest, zedForTest = initializationForTest()  # pass in com port as string literal to connect to motor
     PROGRAM_START_TIME_MS = MS_PER_SEC * int(time.time())
     print("Start time:", PROGRAM_START_TIME_MS)
 
     moveForwardAndStopTest(motorForTest, zedForTest)  # on successful stop, press Ctrl+C to stop program
-    # turnLeftAndStopTest(motorForTest, zedForTest)
-    # turnRightAndStopTest(motorForTest, zedForTest)
-
-    # steerAwayFromObstacleTest(motorForTest, zedForTest)
-    # zigzagDownCorridorTest(motorForTest, zedForTest)
 
     # cleanup
     if motorForTest is not None:
