@@ -15,15 +15,13 @@ import math
 
 
 # important constants
-OBSTACLE_AVOIDANCE_DEPTH_CM = 300  # when this close (in cm) to obstacle, the robot will turn to avoid them
+OBSTACLE_AVOIDANCE_DEPTH_CM = 100  # when this close (in cm) to obstacle, the robot will turn to avoid them
 LINE_AVOIDANCE_DEPTH_CM = 300  # depth at which robot decides to avoid line (in cm)
 MAX_DETECTION_DEPTH_CM = 400
 ROBOT_SPEED = 20
 NANOSEC_PER_SEC = 1000000000  # used for setting delay between motor control sec
-ROBOT_WIDTH = 100  # horizontal width of robot (in cm)
+ROBOT_WIDTH_CM = 100  # horizontal width of robot (in cm)
 
-# TODO: will not work yet (b/c it doesn't disregard extraneous objects first before choosing closest object)
-MULTIPLE_OBSTACLES_ATTEMPT = False  # whether to use multiple obstacle detection or not
 
 class Direction(Enum):
     """
@@ -55,7 +53,7 @@ def avoidLine():
 # Object Detection
 # ======================================================================================================================
 
-def findCoordinatesOfSingleCloseObstacle(depth_list):
+def findCoordinatesOfObstacle(depth_list):
     """
     Gets x-coordinates of a close obstacle. Assumes there is only one obstacle.
 
@@ -69,92 +67,6 @@ def findCoordinatesOfSingleCloseObstacle(depth_list):
             obstacleIndexList.append(i)
 
     return obstacleIndexList
-
-
-# TODO: attempt for detecting multiple objects
-def findCoordinatesOfMultipleCloseObstacles(depth_list):
-    """
-    Gets x-coordinates of close obstacles. Pixels corresponding to different objects are separated into different lists.
-
-    :param depth_list: list of depth values corresponding to a horizontal line of pixels
-
-    :return: list of lists of x-coordinates of close obstacles (where each list entry corresponds to different objects)
-    """
-    obstacleDetected = False
-    listOfListsOfObstacleCoordinates = []
-    listOfCurrentObstacleCoordinates = []
-
-    for depthListIndex in range(len(depth_list)):
-        currentDepth = depth_list[depthListIndex]
-
-        if obstacleDetected:
-            if currentDepth > OBSTACLE_AVOIDANCE_DEPTH_CM:
-                assert len(listOfCurrentObstacleCoordinates) > 0  # TODO: delete later
-                listOfListsOfObstacleCoordinates.append(listOfCurrentObstacleCoordinates)
-                listOfCurrentObstacleCoordinates = []
-                obstacleDetected = False
-            else:  # currentDepth <= MIN_DEPTH_TO_OBSTACLE
-                listOfCurrentObstacleCoordinates.append(depthListIndex)
-        else:  # not obstacleDetected
-            if currentDepth <= OBSTACLE_AVOIDANCE_DEPTH_CM:
-                assert len(listOfCurrentObstacleCoordinates) == 0  # TODO: delete later
-                listOfCurrentObstacleCoordinates.append(depthListIndex)
-                obstacleDetected = True
-
-    # adds last remaining obstacle, if any
-    if obstacleDetected:
-        assert len(listOfCurrentObstacleCoordinates) > 0  # TODO: delete later
-        listOfListsOfObstacleCoordinates.append(listOfCurrentObstacleCoordinates)
-
-    return listOfListsOfObstacleCoordinates
-
-
-def getIndexOfClosestObstacle(obstacle_locations_lists, depth_list):
-    """
-    Assumes that each list entry is nonempty.
-    Location means x-coordinate (index) in depth_list.
-
-    :param obstacle_locations_lists:
-    :return:
-    """
-
-    if len(obstacle_locations_lists) == 0:
-        return -1
-
-    # initialization
-    indexOfClosestObject = 0  # index within obstacle_locations_lists
-    closestObject = obstacle_locations_lists[indexOfClosestObject]
-    indexOfClosestLocationOfClosestObject = 0  # index within list entry of obstacle_location_lists
-    closestLocationOfClosestObject = closestObject[indexOfClosestLocationOfClosestObject]
-    closestDistanceFromClosestObject = depth_list[closestLocationOfClosestObject]
-
-    # iterates by object
-    for indexOfCurrentObject in range(len(obstacle_locations_lists)):
-        currentObject = obstacle_locations_lists[indexOfCurrentObject]
-        indexOfClosestLocationOfCurrentObject = 0
-        closestLocationOfCurrentObject = currentObject[indexOfClosestLocationOfCurrentObject]
-        closestDistanceFromCurrentObject = depth_list[closestLocationOfCurrentObject]
-
-        # iterates by location for current object
-        for indexOfCurrentLocationOfCurrentObject in range(len(currentObject)):
-            currentLocationOfCurrentObject = currentObject[indexOfCurrentLocationOfCurrentObject]
-            currentDistanceFromCurrentObject = depth_list[currentLocationOfCurrentObject]
-
-            # compares distances within object
-            if currentDistanceFromCurrentObject < closestDistanceFromCurrentObject:
-                indexOfClosestLocationOfCurrentObject = indexOfCurrentLocationOfCurrentObject
-                closestLocationOfCurrentObject = currentObject[indexOfClosestLocationOfCurrentObject]
-                closestDistanceFromCurrentObject = depth_list[closestLocationOfCurrentObject]
-
-        # compares distances among objects
-        if closestDistanceFromCurrentObject < closestDistanceFromClosestObject:
-            indexOfClosestObject = indexOfCurrentObject
-            closestObject = obstacle_locations_lists[indexOfClosestObject]
-            indexOfClosestLocationOfClosestObject = indexOfClosestLocationOfCurrentObject
-            closestLocationOfClosestObject = closestObject[indexOfClosestLocationOfClosestObject]
-            closestDistanceFromClosestObject = depth_list[closestLocationOfClosestObject]
-
-    return indexOfClosestObject
 
 
 def accountForExtraneousObjects(obstacle_location_list, left_image, depth_list):
@@ -201,7 +113,7 @@ def accountForExtraneousObjects(obstacle_location_list, left_image, depth_list):
             horizDistToObjectFromCenterpoint = depthToObstacle * math.sin(theta_radians)
 
             # Compare horizontal distance to width of robot
-            if horizDistToObjectFromCenterpoint < (ROBOT_WIDTH / 2):
+            if horizDistToObjectFromCenterpoint < (ROBOT_WIDTH_CM / 2):
                 # Turn left to avoid obstacle
                 return Direction.LEFT, depthToObstacle, leftMostPixelOfObstacleOnRight
     else:  # if the obstacle is on the left
@@ -222,7 +134,7 @@ def accountForExtraneousObjects(obstacle_location_list, left_image, depth_list):
             horizDistToObjectFromCenterpoint = depthToObstacle * math.sin(theta_radians)
 
             # Compare horizontal distance to width of robot
-            if horizDistToObjectFromCenterpoint < (ROBOT_WIDTH / 2):
+            if horizDistToObjectFromCenterpoint < (ROBOT_WIDTH_CM / 2):
                 # Turn right to avoid obstacle
                 return Direction.RIGHT, depthToObstacle, rightMostPixelOfObstacleOnLeft
 
@@ -254,30 +166,19 @@ def avoidObstacle(zed):
             currentDepth = 0
         depthList.append(currentDepth)
 
-    obstacleLocationList = None
-    if MULTIPLE_OBSTACLES_ATTEMPT:
-        listOfObstacleLocationLists = findCoordinatesOfMultipleCloseObstacles(depthList)
-        indexOfClosestObstacle = getIndexOfClosestObstacle(listOfObstacleLocationLists, depthList)
-        if indexOfClosestObstacle < 0 or indexOfClosestObstacle >= len(listOfObstacleLocationLists):
-            obstacleLocationList = []
-        else:
-            rawObstacleLocationList = listOfObstacleLocationLists[indexOfClosestObstacle]
-            arr = []
-            for elem in rawObstacleLocationList:
-                arr.append(depthList[elem])
-            obstacleLocationList = findCoordinatesOfSingleCloseObstacle(arr)
-    else:
-        obstacleLocationList = findCoordinatesOfSingleCloseObstacle(depthList)
+    obstacleLocationList = findCoordinatesOfObstacle(depthList)
 
     if len(obstacleLocationList) == 0:
         # print("No obstacle")
         directionAwayFromObstacle = Direction.FORWARD
         distanceFromObstacle = MAX_DETECTION_DEPTH_CM
-        xCoordOfObstacle = leftImage.get_width() / 2
+        xCoordOfObstacle = int(leftImage.get_width() / 2)
     else:
-        directionAwayFromObstacle, distanceFromObstacle, xCoordOfObstacle = accountForExtraneousObjects(obstacleLocationList, leftImage, depthList)
+        directionAwayFromObstacle, distanceFromObstacle, xCoordOfObstacle = accountForExtraneousObjects(
+            obstacleLocationList, leftImage, depthList)
 
-    print("Direction chosen: {0}, Obstacle distance at ({1}, {2}): {3}".format(directionAwayFromObstacle.value, xCoordOfObstacle, centerY, distanceFromObstacle))
+    print("Direction chosen: {0}, Obstacle distance at ({1}, {2}): {3}".format(directionAwayFromObstacle.value,
+        xCoordOfObstacle, centerY, distanceFromObstacle))
     return directionAwayFromObstacle, distanceFromObstacle
 
 
@@ -313,8 +214,8 @@ def avoidLineAndObstacle(zed):
         else:  # distanceFromLine <= distanceFromObstacle
             directionToMove = directionAwayFromLine
 
-    print("Direction to move: {0},\n\tLine: ({1}, {2}),\n\tObstacle: ({3}, {4})".format(directionToMove.value,
-        directionAwayFromLine.value, distanceFromLine, directionAwayFromObstacle.value, distanceFromObstacle))
+    # print("Direction to move: {0},\n\tLine: ({1}, {2}),\n\tObstacle: ({3}, {4})".format(directionToMove.value,
+    #     directionAwayFromLine.value, distanceFromLine, directionAwayFromObstacle.value, distanceFromObstacle))
     return directionToMove
 
 
@@ -401,9 +302,7 @@ def sendMotorCommand(motor_obj, command, last_command_time):
 
 def cameraSoloTest():
     """
-    testing multiple objects
-
-    :return:
+    Test with camera by itself (to avoid motor and bluetooth serial connection errors)
     """
     # initialization of stereo camera
     zed = sl.Camera()
@@ -413,10 +312,10 @@ def cameraSoloTest():
     error = zed.open(init_params)  # opens the camera
     if error != sl.ERROR_CODE.SUCCESS:
         print("Failed to open camera. Error code:", error)
-        initializationFailure = True
+        exit(1)
 
     while True:
-        avoidObstacle(zed)
+        runAutonomousControls(zed)
 
 
 if __name__ == "__main__":
@@ -425,7 +324,7 @@ if __name__ == "__main__":
 
     # initialization of usb connections
     motors = MotorController('COM4')
-    gps = GPS("COM7", 40, -80)
+    # gps = GPS("COM7", 40, -80)
     bluetoothSerialObj = serial.Serial('COM3')  # COMxx format on Windows, ttyUSBx format on Linux
     bluetoothSerialObj.baudrate = 9600  # set Baud rate to 9600
     bluetoothSerialObj.bytesize = 8  # Number of data bits = 8

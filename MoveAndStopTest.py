@@ -18,8 +18,8 @@ import os
 import queue
 
 # how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
-MIN_THRESHOLD_DISTANCE_CM = 300
-MAX_THRESHOLD_DISTANCE_CM = 325
+MIN_THRESHOLD_DISTANCE_CM = 100
+MAX_THRESHOLD_DISTANCE_CM = 125
 
 # lower and upper bounds on depth values (in cm) to consider for obstacle detection; for captureImages...() functions
 MIN_OBSTACLE_DEPTH_CM = 0
@@ -99,8 +99,7 @@ def getCoordinatesOfCloseObstacle(image, depth_matrix):
     return centerOfObstacleX, centerY
 
 
-def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_params, outputFileDescriptor,
-    writeOutputLock=None):
+def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_params):
     """
     Captures a single image and detects location and depth value of any close obstacle. Helper function for the
     captureImagesUntil* functions.
@@ -131,15 +130,15 @@ def captureImageAndCheckForObstacle(zed, left_image, left_depth_matrix, runtime_
         err, depthValue = left_depth_matrix.get_value(x, y)
         depthValue = clipData(depthValue, MIN_OBSTACLE_DEPTH_CM, MAX_OBSTACLE_DEPTH_CM)
         timestampMillisecond = zed.get_timestamp(sl.TIME_REFERENCE.IMAGE).get_milliseconds()
-        writeToStdoutAndFile(outputFileDescriptor, "Time: {0} ms, Distance from camera at ({1}, {2}): {3} cm\n".format(
-            timestampMillisecond - PROGRAM_START_TIME_MS, x, y, depthValue), writeOutputLock)
+        print("Time: {0} ms, Distance from camera at ({1}, {2}): {3} cm".format(timestampMillisecond -
+            PROGRAM_START_TIME_MS, x, y, depthValue))
     else:
-        writeToStdoutAndFile(outputFileDescriptor, "Failed to grab image. Error: {0}\n".format(error), writeOutputLock)
+        print("Failed to grab image. Error: {0}".format(error))
 
     return depthValue, x, y
 
 
-def captureImagesUntilCloseToObstacle(zed, outputFileDescriptor, writeOutputLock, parent_connection, pipe_empty_event):
+def captureImagesUntilCloseToObstacle(zed):
     """
     Uses depth sensor to wait until a close obstacle is detected. Used to avoid colliding into obstacles.
 
@@ -157,8 +156,7 @@ def captureImagesUntilCloseToObstacle(zed, outputFileDescriptor, writeOutputLock
     x = int(leftImage.get_width() / 2)
     y = int(leftImage.get_height() / 2)
     while depthValue is None or depthValue > MIN_THRESHOLD_DISTANCE_CM:
-        depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtimeParameters,
-            outputFileDescriptor, writeOutputLock)
+        depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtimeParameters)
 
     return x, y, leftImage
 
@@ -180,28 +178,7 @@ def captureImagesUntilClear(zed):
         depthValue = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtime_params)[0]
 
 
-def writeToStdoutAndFile(file_descriptor, output_to_write, write_output_lock=None):
-    """
-    Writes output to standard output and to specified file. File associated with file_descriptor must already have
-    been opened.
-
-    :param file_descriptor: file descriptor of file to write output to
-    :param output_to_write: the output to write as a String
-    :param write_output_lock: lock used to protect writing output when using multiprocessing
-    """
-    if write_output_lock is not None:
-        write_output_lock.acquire()
-    sys.stdout.write(output_to_write)
-    try:
-        os.write(file_descriptor, output_to_write.encode())
-    except OSError:  # gives up on writing to file if there's error (ex: Bad File Descriptor error)
-        pass
-    if write_output_lock is not None:
-        write_output_lock.release()
-
-
-def moveForwardUntilSignaled(motor, stop_event, output_file_descriptor, write_output_lock, child_connection=None,
-    pipe_empty_event=None):
+def moveForwardUntilSignaled(motor, stop_event):
     """
     Repeatedly sends move forward commands to the robot, which is necessary to keep the robot moving overtime. Should
     be executed as a new process.
@@ -216,8 +193,7 @@ def moveForwardUntilSignaled(motor, stop_event, output_file_descriptor, write_ou
     while not stop_event.is_set():
         if motor is not None:
             motor.forward(speed)
-        writeToStdoutAndFile(output_file_descriptor, "Sent move forward command with speed = {0}\n".format(speed),
-            write_output_lock)
+        print("Sent move forward command with speed = {0}".format(speed))
         time.sleep(COMMAND_SEND_PERIOD_MS / MS_PER_SEC)
 
 
@@ -261,21 +237,15 @@ def moveForwardAndStopTest(motor, zed):
         return
 
     # initialization
-    outputFile = open("moveForwardAndStopTestResults.txt", "w")
-    writeOutputLock = multiprocessing.Lock()
     stopEvent = multiprocessing.Event()
-    childConnection, parentConnection = multiprocessing.Pipe(False)  # TODO: use for sharing depth value
-    pipeEmptyEvent = multiprocessing.Event()
-    pipeEmptyEvent.set()  # pipe is initially empty
 
     # moves robot forward
-    moveRobotForwardProcess = multiprocessing.Process(target=moveForwardUntilSignaled, args=(motor, stopEvent,
-        outputFile.fileno(), writeOutputLock, childConnection, pipeEmptyEvent))
-    writeToStdoutAndFile(outputFile.fileno(), "Robot moving forward\n")
+    moveRobotForwardProcess = multiprocessing.Process(target=moveForwardUntilSignaled, args=(motor, stopEvent))
+    print("Robot moving forward")
     moveRobotForwardProcess.start()
 
     # keeps moving forward until it sees close enough obstacle in front of it
-    captureImagesUntilCloseToObstacle(zed, outputFile.fileno(), writeOutputLock, parentConnection, pipeEmptyEvent)
+    captureImagesUntilCloseToObstacle(zed)
 
     # stops robot
     stopEvent.set()
@@ -286,22 +256,15 @@ def moveForwardAndStopTest(motor, zed):
     # continues to collect data after robot stops (to collect data on braking distance for competition design report)
     collisionFlag = False
     counter = 0  # used to periodically remind that robot is stopping in the output
-    try:
-        while not collisionFlag:
-            depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters(),
-                outputFile.fileno())[0]
-            if depthValue <= 0 or counter == 0:
-                if depthValue > 0:
-                    writeToStdoutAndFile(outputFile.fileno(), "Robot stopping\n")
-                else:
-                    writeToStdoutAndFile(outputFile.fileno(), "Robot may have collided into obstacle\n")
-                    collisionFlag = True
-            counter = (counter + 1) % 10
-    except KeyboardInterrupt:  # pressing Ctrl+C stops data collection if robot successfully stops at nonzero distance
-        pass
-
-    # cleanup
-    outputFile.close()
+    while not collisionFlag:
+        depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters())[0]
+        if depthValue <= 0 or counter == 0:
+            if depthValue > 0:
+                print("Robot stopping")
+            else:
+                print("Robot may have collided into obstacle")
+                collisionFlag = True
+        counter = (counter + 1) % 10
 
 
 # ======================================================================================================================
