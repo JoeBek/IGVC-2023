@@ -272,7 +272,8 @@ def moveForwardAndStopTest(motor, zed):
 
 if __name__ == "__main__":
     # initialization
-    motorForTest, zedForTest = initializationForTest()  # pass in com port as string literal to connect to motor
+    # motorForTest, zedForTest = initializationForTest()  # pass in com port as string literal to connect to motor
+    motorForTest, zedForTest = initializationForTest('COM4')
     PROGRAM_START_TIME_MS = MS_PER_SEC * int(time.time())
     print("Start time:", PROGRAM_START_TIME_MS)
 

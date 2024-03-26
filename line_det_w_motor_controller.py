@@ -14,7 +14,7 @@ from MotorControlAPI import MotorController
 ROBOT_SPEED = 20
 ONE_SECOND_DELAY = 1000000000
 #myVar = MotorController('COMx')
-
+motorObj = MotorController('COM4')
 
 #print(imageFiles)
 
@@ -191,7 +191,7 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
         elif left_diff == right_diff: 
             print("stay straight")
             #myVar.forward(20)'''
-    motorObj = MotorController('COM4')
+    # motorObj = MotorController('COM4')
     initialTime = time.time_ns()
     initialTime = sendMotorCommand(motorObj, direction, initialTime)
     
