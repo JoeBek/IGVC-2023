@@ -1,6 +1,3 @@
-import serial
-
-
 """
 ===================================================================================================================
                                                 INSTRUCTIONS
@@ -30,6 +27,9 @@ The stop() function is the primary way to get the robot to stop moving. The shut
 
 ===================================================================================================================
 """
+import serial
+import time
+
 class MotorController:
     def __init__(self, comPort):
         # Setting up serial communication with the motor controller
@@ -43,15 +43,16 @@ class MotorController:
     #Tells both motors to go forward (the direction of the small wheels)
     # speed takes values between 0-100 (0 being stopped, 100 being full speed)
     def forward(self, speed):
-        if (speed < 0):
+        if (speed < 0
+            ):
             exit()
 
         print("forward")
         
         motorCommandString1 = "!G 1 "
         motorCommandString2 = "!G 2 "
-        motorSpeedValue1 = int(-10*speed)
-        motorSpeedValue2 = int(10*speed)
+        motorSpeedValue1 = int(-10*speed) # Left motor
+        motorSpeedValue2 = int(10*speed)  # Right motor
         motorCommandString1 += str(motorSpeedValue1) + "\r"
         motorCommandString2 += str(motorSpeedValue2) + "\r"
         self.MotorSerialObj.write(bytes(motorCommandString1, 'utf-8'))
@@ -80,6 +81,7 @@ class MotorController:
         
         motorCommandString1 = "!G 1 "
         motorCommandString2 = "!G 2 "
+        #motorSpeedValue1 = int(5*speed)
         motorSpeedValue1 = 0
         motorSpeedValue2 = int(10*speed)
         motorCommandString1 += str(motorSpeedValue1) + "\r"
@@ -96,7 +98,21 @@ class MotorController:
         motorCommandString1 = "!G 1 "
         motorCommandString2 = "!G 2 "
         motorSpeedValue1 = int(-10*speed)
+        #motorSpeedValue2 = int(-5*speed)
         motorSpeedValue2 = 0
+        motorCommandString1 += str(motorSpeedValue1) + "\r"
+        motorCommandString2 += str(motorSpeedValue2) + "\r"
+        self.MotorSerialObj.write(bytes(motorCommandString1, 'utf-8'))
+        self.MotorSerialObj.write(bytes(motorCommandString2, 'utf-8'))
+
+    #Sets the speed of the robot's wheels to a custom value specified by right and left speed
+    # the speed values represent a percentage of maximum speed and can be negative
+    # IMPORTANT NOTE: turning the left and right wheel in opposite directions causes the robot to be stuck in place
+    def customMovement(self, right_speed, left_speed):
+        motorCommandString1 = "!G 1 "
+        motorCommandString2 = "!G 2 "
+        motorSpeedValue1 = int(-10*left_speed) # Left motor
+        motorSpeedValue2 = int(10*right_speed)  # Right motor
         motorCommandString1 += str(motorSpeedValue1) + "\r"
         motorCommandString2 += str(motorSpeedValue2) + "\r"
         self.MotorSerialObj.write(bytes(motorCommandString1, 'utf-8'))
@@ -110,4 +126,5 @@ class MotorController:
     #Emergency shuts down motors and closes the serial port
     def shutDown(self):
         self.MotorSerialObj.write(b'!EX\r')
+        time.sleep(1)
         self.MotorSerialObj.close()      # Close the port
