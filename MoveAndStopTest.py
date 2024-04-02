@@ -18,15 +18,15 @@ import os
 import queue
 
 # how close robot should be allowed to approach obstacle (in cm); for captureImages...() functions
-MIN_THRESHOLD_DISTANCE_CM = 100
-MAX_THRESHOLD_DISTANCE_CM = 125
+MIN_THRESHOLD_DISTANCE_CM = 300
+MAX_THRESHOLD_DISTANCE_CM = 325
 
 # lower and upper bounds on depth values (in cm) to consider for obstacle detection; for captureImages...() functions
 MIN_OBSTACLE_DEPTH_CM = 0
-MAX_OBSTACLE_DEPTH_CM = 500
+MAX_OBSTACLE_DEPTH_CM = 400
 
 # speed settings for motor controls
-FORWARD_SPEED = 25
+FORWARD_SPEED = 20
 TURNING_SPEED = 10
 
 # how often to send the same move/turn command to robot (in ms between commands) to make it do the same thing overtime
