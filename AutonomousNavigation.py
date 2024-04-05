@@ -79,13 +79,6 @@ def sendMotorCommand(motorObj, command, lastCommandTime, leftSpeed=0, rightSpeed
 # LINE DETECTION FUNCTIONS
 #--------------------------------------------------------------
 
-def display_images(images, cmap=None):
-    plt.figure(figsize=(40,40))    
-    for i, image in enumerate(images):
-        plt.subplot(3,2,i+1)
-        plt.imshow(image, cmap)
-        plt.autoscale(tight=True)
-    plt.show()
     
 #display_images(imageList)
 
@@ -139,8 +132,9 @@ def canny(img):
 
 
 rightSlope, leftSlope, rightIntercept, leftIntercept = [],[],[],[]
-def draw_lines(img, lines, thickness=5):
-    global rightSlope, leftSlope, rightIntercept, leftIntercept
+prevRightSlope, prevLeftSlope = 0
+def draw_lines(img, lines, lastCommandTime):
+    global rightSlope, leftSlope, rightIntercept, leftIntercept, prevRightSlope, prevLeftSlope
 
     rightColor=[0,255,0]
     leftColor=[255,0,0]
@@ -175,6 +169,16 @@ def draw_lines(img, lines, thickness=5):
     
     rightavgSlope = np.mean(rightSlope[-30:])
     rightavgIntercept = np.mean(rightIntercept[-30:])
+
+    if (time.time_ns() > lastCommandTime + (ONE_SECOND_DELAY*0.1)):
+        if prevLeftSlope == leftavgSlope:
+            print("stop")
+            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
+        elif prevRightSlope == rightavgSlope:
+            print("stop")
+            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
+    
+    #plotting the lines
     
     left_line_x1 = None 
     right_line_x1 = None
@@ -201,14 +205,14 @@ def draw_lines(img, lines, thickness=5):
     
     
                 
-def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
+def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lastCommandTime):
     """
     `img` should be the output of a Canny transform.
     """
     #using hough to get the lines from the canny image
     lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-    coors = draw_lines(line_img, lines)
+    coors = draw_lines(line_img, lines, lastCommandTime)
     #line_img2 = cv2.circle(line_img, (coors[0], 400), radius=10, color=(255, 255, 255), thickness=-6)
     #line_img2 = cv2.circle(line_img2, (coors[1], 400), radius=10, color=(255, 255, 255), thickness=-6)
     
@@ -221,7 +225,7 @@ def linedetect(img):
 #hough_img = list(map(linedetect, canny_img))
 #display_images(hough_img)
 
-def processImage(image):
+def processImage(image, lastCommandTime):
     #rgbImg = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
     rgbImg = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)      #COLOR_BGRA2BGR
 
@@ -232,7 +236,7 @@ def processImage(image):
 
     canny = cv2.Canny(grayscale(filterimg), 50, 120)
 
-    myline = hough_lines(canny, 1, np.pi/180, 10, 20, 5)
+    myline = hough_lines(canny, 1, np.pi/180, 10, 20, 5, lastCommandTime)
 
     weighted_img = cv2.addWeighted(myline, 1, rgbImg, 0.8, 0)
     
@@ -402,7 +406,7 @@ def comparePathToObstacles(coordinateList):
 # Perform all autonomous navigation checks
 # Returns the direction the robot should move according to the object detection and line detection
 # Should only return "up", "left", or "right"
-def runAutonomousControls(zed):
+def runAutonomousControls(zed, lastCommandTime):
     #depthSensorDirection = runDepthSensor(zed) # Finds the best course of action according to the depth sensor
 
     # Get the image from the zed camera
@@ -412,7 +416,7 @@ def runAutonomousControls(zed):
     zed.retrieve_image(leftImage1, sl.VIEW.LEFT)
 
     frame = leftImage1.get_data()
-    final, lineImg = processImage(frame)  # process the current image and color the lines in a solid color
+    final, lineImg = processImage(frame, lastCommandTime)  # process the current image and color the lines in a solid color
 
     cv2.imshow("img", final)
 
