@@ -101,7 +101,7 @@ def roi(img):
     if img is not None:
         x = int(img.shape[1])
         y = int(img.shape[0])
-        shape = np.array([[int(0), int(y)], [int(x), int(y)], [int(0.55*x), int(0.6*y)], [int(0.45*x), int(0.6*y)]])
+        shape = np.array([[int(0), int(y)], [int(x), int(y)], [int(x), int(0.6*y)], [int(0), int(0.6*y)]])
 
         mask = np.zeros_like(img)
 
@@ -169,35 +169,38 @@ def draw_lines(img, lines):
     
     rightavgSlope = np.mean(rightSlope[-30:])
     rightavgIntercept = np.mean(rightIntercept[-30:])
-
-    if math.isnan(rightavgSlope):
-       #draw left line and everything to the right
-        left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
-        left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
-
-        pts = np.array([[left_line_x1, int(0.65*img.shape[0])],[left_line_x2, int(img.shape[0])],[int(img.shape[0]), int(0.65*img.shape[0])],[int(img.shape[0]), int(0.65*img.shape[0])]], np.int32)
-        pts = pts.reshape((-1,1,2))
-        cv2.fillPoly(img,[pts],(0,0,255))  
-
-        cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 10)
-        return [left_line_x1, float("nan"), leftavgSlope, float("nan")]
-
-    if math.isnan(leftavgSlope):
-    #draw right line and everything to the left
-        right_line_x1 = int((0.65*img.shape[0] - rightavgIntercept)/rightavgSlope)
-        right_line_x2 = int((img.shape[0] - rightavgIntercept)/rightavgSlope)
-
-        pts = np.array([[20, int(0.65*img.shape[0])],[0, int(img.shape[0])],[right_line_x2, int(img.shape[0])],[right_line_x1, int(0.65*img.shape[0])]], np.int32)
-        pts = pts.reshape((-1,1,2))
-        cv2.fillPoly(img,[pts],(0,0,255)) 
-
-        cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
-        return [float("nan"), right_line_x1, float("nan"), rightavgSlope]
     
     left_line_x1 = None 
     right_line_x1 = None
     #plotting the lines
     try:
+        if math.isnan(rightavgSlope):
+       #draw left line and everything to the right
+            left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
+            left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
+
+            pts = np.array([[left_line_x1, int(0.65*img.shape[0])],[left_line_x2, int(img.shape[0])],[int(img.shape[1]), int(img.shape[0])],[int(img.shape[1]), int(0.5*img.shape[1])]], np.int32)
+            pts = pts.reshape((-1,1,2))
+            cv2.fillPoly(img,[pts],(0,0,255))  
+
+            cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 10)
+            return [left_line_x1, float("nan"), leftavgSlope, float("nan")]
+
+        if math.isnan(leftavgSlope):
+        #draw right line and everything to the left
+            right_line_x1 = int((0.65*img.shape[0] - rightavgIntercept)/rightavgSlope)
+            right_line_x2 = int((img.shape[0] - rightavgIntercept)/rightavgSlope)
+
+            pts = np.array([[15, int(0.65*img.shape[0])],[0, int(img.shape[0])],[right_line_x2, int(img.shape[0])],[right_line_x1, int(0.65*img.shape[0])]], np.int32)
+            pts = pts.reshape((-1,1,2))
+            cv2.fillPoly(img,[pts],(0,0,255)) 
+
+            cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
+            return [float("nan"), right_line_x1, float("nan"), rightavgSlope]
+        
+        if rightavgSlope == 0 and leftavgSlope == 0: 
+            return [0, 0, leftavgSlope, rightavgSlope]
+
         left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
         left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
     
