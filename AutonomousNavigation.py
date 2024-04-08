@@ -133,19 +133,11 @@ def canny(img):
 
 rightSlope, leftSlope, rightIntercept, leftIntercept = [],[],[],[]
 prevRightSlope, prevLeftSlope = 0 
-def draw_lines(img, lines, lastCommandTime):
+def draw_lines(img, lines):
     global rightSlope, leftSlope, rightIntercept, leftIntercept
 
     rightColor=[0,255,0]
     leftColor=[255,0,0]
-
-    if (time.time_ns() > lastCommandTime + (ONE_SECOND_DELAY*0.1)):
-        if prevLeftSlope == leftavgSlope:
-            print("stop")
-            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
-        elif prevRightSlope == rightavgSlope:
-            print("stop")
-            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
     
     #this is used to filter out the outlying lines that can affect the average
     #We then use the slope we determined to find the y-intercept of the filtered lines by solving for b in y=mx+b
@@ -177,6 +169,30 @@ def draw_lines(img, lines, lastCommandTime):
     
     rightavgSlope = np.mean(rightSlope[-30:])
     rightavgIntercept = np.mean(rightIntercept[-30:])
+
+    if math.isnan(rightavgSlope):
+       #draw left line and everything to the right
+        left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
+        left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
+
+        pts = np.array([[left_line_x1, int(0.65*img.shape[0])],[left_line_x2, int(img.shape[0])],[int(img.shape[0]), int(0.65*img.shape[0])],[int(img.shape[0]), int(0.65*img.shape[0])]], np.int32)
+        pts = pts.reshape((-1,1,2))
+        cv2.fillPoly(img,[pts],(0,0,255))  
+
+        cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 10)
+        return [left_line_x1, float("nan"), leftavgSlope, float("nan")]
+
+    if math.isnan(leftavgSlope):
+    #draw right line and everything to the left
+        right_line_x1 = int((0.65*img.shape[0] - rightavgIntercept)/rightavgSlope)
+        right_line_x2 = int((img.shape[0] - rightavgIntercept)/rightavgSlope)
+
+        pts = np.array([[20, int(0.65*img.shape[0])],[0, int(img.shape[0])],[right_line_x2, int(img.shape[0])],[right_line_x1, int(0.65*img.shape[0])]], np.int32)
+        pts = pts.reshape((-1,1,2))
+        cv2.fillPoly(img,[pts],(0,0,255)) 
+
+        cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
+        return [float("nan"), right_line_x1, float("nan"), rightavgSlope]
     
     left_line_x1 = None 
     right_line_x1 = None
@@ -203,14 +219,14 @@ def draw_lines(img, lines, lastCommandTime):
     
     
                 
-def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lastCommandTime):
+def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     """
     `img` should be the output of a Canny transform.
     """
     #using hough to get the lines from the canny image
     lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-    coors = draw_lines(line_img, lines, lastCommandTime)
+    coors = draw_lines(line_img, lines)
     #line_img2 = cv2.circle(line_img, (coors[0], 400), radius=10, color=(255, 255, 255), thickness=-6)
     #line_img2 = cv2.circle(line_img2, (coors[1], 400), radius=10, color=(255, 255, 255), thickness=-6)
     
@@ -223,7 +239,7 @@ def linedetect(img):
 #hough_img = list(map(linedetect, canny_img))
 #display_images(hough_img)
 
-def processImage(image, lastCommandTime):
+def processImage(image):
     #rgbImg = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
     rgbImg = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)      #COLOR_BGRA2BGR
 
@@ -234,7 +250,7 @@ def processImage(image, lastCommandTime):
 
     canny = cv2.Canny(grayscale(filterimg), 50, 120)
 
-    myline = hough_lines(canny, 1, np.pi/180, 10, 20, 5, lastCommandTime)
+    myline = hough_lines(canny, 1, np.pi/180, 10, 20, 5)
 
     weighted_img = cv2.addWeighted(myline, 1, rgbImg, 0.8, 0)
     
@@ -414,7 +430,7 @@ def runAutonomousControls(zed, lastCommandTime):
     zed.retrieve_image(leftImage1, sl.VIEW.LEFT)
 
     frame = leftImage1.get_data()
-    final, lineImg = processImage(frame, lastCommandTime)  # process the current image and color the lines in a solid color
+    final, lineImg = processImage(frame)  # process the current image and color the lines in a solid color
 
     cv2.imshow("img", final)
 
