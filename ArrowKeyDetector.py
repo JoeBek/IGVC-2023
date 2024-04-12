@@ -34,6 +34,9 @@ def on_key_release(key):
         time.sleep(1)
         SerialObj.close()      # Close the port
         exit()
+    else:
+        SerialObj.write(b"Q\n")
+        print("Stopping Motor")
 
 def on_key_press(key):
     if key == Key.right:
