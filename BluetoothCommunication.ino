@@ -3,6 +3,7 @@
 #define rxPin 10
 #define txPin 11
 #define lightPin 5
+#define stopPin 4
 
 //#include <QMC5883LCompass.h>
 //QMC5883LCompass compass;
@@ -29,7 +30,10 @@ void setup()  {
     pinMode(rxPin, INPUT);
     pinMode(txPin, OUTPUT);
     pinMode(lightPin, OUTPUT);
+    pinMode(stopPin, OUTPUT);
     
+    digitalWrite(stopPin, LOW);
+
     // Set the baud rate for the SoftwareSerial object
     mySerial.begin(9600);
 
@@ -71,6 +75,9 @@ void loop() {
       c = Serial.read();
       if (c == 'Z') {
         blinking = !blinking;
+      }
+      if (c == 'Q') {
+        digitalWrite(stopPin, HIGH);
       }
       mySerial.write(c);
     }
