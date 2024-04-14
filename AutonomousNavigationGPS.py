@@ -21,8 +21,12 @@ ROBOT_SPEED = 20
 ONE_SECOND_DELAY = 1000000000
 ROBOT_WIDTH = 100 #Horizontal width of robot in cm
 
-WAYPOINT_LATITUDE = 37.228889
-WAYPOINT_LONGITUDE = -80.4155556
+DO_LINE_DETECTION = True
+
+#List of tuples containing the latitude and longitude of waypoints in the form (latitude, longitude)
+# the list is ordered in the order that the waypoints will be reached
+WAYPOINT_LIST = [(37.22156271, -80.42687393), (37, -80), (37, -80)]
+        
 
 def parseManualControls(bluetoothString, currentDirection):
     if bluetoothString == b"RIGHT PRESSED\n":
@@ -101,7 +105,7 @@ def roi(img):
     if img is not None:
         x = int(img.shape[1])
         y = int(img.shape[0])
-        shape = np.array([[int(0), int(y-100)], [int(x), int(y-100)], [int(0.55*x), int(0.6*y)], [int(0.45*x), int(0.6*y)]])
+        shape = np.array([[int(0), int(y-100)], [int(x), int(y-100)], [int(x), int(0.6*y)], [int(0), int(0.6*y)]])
 
         mask = np.zeros_like(img)
 
@@ -246,13 +250,10 @@ def processImage(image):
     weighted_img = cv2.addWeighted(myline, 1, rgbImg, 0.8, 0)
     
     #cv2.imshow("img", weighted_img)
-
-
-    ''' motorObj = MotorController('COM4')
-    initialTime = time.time_ns()
-    initialTime = sendMotorCommand(motorObj, command, initialTime)'''
+    if (DO_LINE_DETECTION):
+        return weighted_img, myline
     
-    return weighted_img, myline
+    return rgbImg, rgbImg
 
 def coordinateTransform(xpos, ypos):
     transformedXpos = int(300 + xpos)
@@ -374,7 +375,7 @@ def comparePathToObstacles(coordinateList):
     #print("Coord length: " + str(len(coordinateList)))
 
     
-    while minDistanceRight < ROBOT_WIDTH/2 and minDistanceLeft < ROBOT_WIDTH/2 and angle < 55:
+    while minDistanceRight < ROBOT_WIDTH/2 and minDistanceLeft < ROBOT_WIDTH/2 and angle < 35:
         angle_radians =  angle * math.pi/180 # Angle to object in radians
         slope = 1/math.tan(angle_radians)
         a = -1.000 * slope
@@ -440,8 +441,9 @@ def runAutonomousControls(zed):
     xpos = ypos * math.tan(desiredAngle_rad)
     pygame.draw.line(window, (0,0,255), coordinateTransform(0,0), coordinateTransform(xpos, ypos), ROBOT_WIDTH)
 
+
     # Constant representing the desired travel angle at which the inside wheel will stop while the outside wheel moves at double speed
-    STOP_ANGLE = 55
+    STOP_ANGLE = 35
 
     #Creates a differential between the wheel speeds proportional to the desired angle of travel
     leftSpeed = int(ROBOT_SPEED * (1 - (desiredAngle/STOP_ANGLE)))
@@ -471,7 +473,7 @@ init_params.camera_resolution = sl.RESOLUTION.HD720
 init_params.camera_fps = 30
 error = zed.open(init_params)
 
-gps = GPS("COM9", WAYPOINT_LATITUDE, WAYPOINT_LONGITUDE)
+gps = GPS("COM9", WAYPOINT_LIST[0][0], WAYPOINT_LIST[0][1])
 
 #----------------------------------------------------------------------
 # Setting up overhead view
@@ -500,8 +502,6 @@ timeOfLastCommand = time.time_ns()
 # Holds the command about to be sent
 currentCommand = "stop"
 
-# Boolean to keep track of whether the robot is in autonomous mode, starts in manual control mode
-doAutonomous = False
 
 #----------------------------------------------------------------------
 # Main loop
@@ -552,7 +552,6 @@ while True:
     if (doAutonomous):
         leftSpeed, rightSpeed = runAutonomousControls(zed)
         timeOfLastCommand = sendMotorCommand(motors, "custom", timeOfLastCommand, leftSpeed, rightSpeed)
-        currentCommand = "stop"
     else:
         # send the next course of action to the motors based on manual controls
         timeOfLastCommand = sendMotorCommand(motors, currentCommand, timeOfLastCommand)
@@ -562,14 +561,25 @@ while True:
 
     #TODO: add logic to check if the robot is near the destination waypoint
     #       if the robot is near the waypoint, shut down
+
+        #TODO: add logic to check if the robot is near the destination waypoint
+    #       if the robot is near the waypoint, shut down
     gps.updatePosition()
 
     if (gps.validPosition):
         distToWaypoint = gps.findWaypointDistance()
+        print("waypoint distance: " + str(distToWaypoint))
         if (distToWaypoint < 2): #When the robot reaches the waypoint, return to manual controls
-            doAutonomous = False
-            currentCommand = "stop"
-            print("AT THE WAYPOINT!!!!!!!!!!!!!!!!!!")
+            #Update the current waypoint value
+            if (len(WAYPOINT_LIST) > 1): #If the currently reached waypoint isnt the last one
+                WAYPOINT_LIST.pop(0) #Remove the current waypoint values from the list
+                gps.updateWaypoint(WAYPOINT_LIST[0][0], WAYPOINT_LIST[0][1]) #Update the current gps waypoint
+                DO_LINE_DETECTION = not DO_LINE_DETECTION #Swap between doing and not doing line detection
+            else: #If reached the last waypoint, exit autonomous mode and stop
+                doAutonomous = False
+                currentCommand = "stop"
+                print("AT THE WAYPOINT!!!!!!!!!!!!!!!!!!")
+                BluetoothSerialObj.write(b"Z\n")
         
         
 
@@ -580,3 +590,4 @@ while True:
 # Shut down everything and close open ports
 motors.shutDown()
 BluetoothSerialObj.close()      # Close the port
+
