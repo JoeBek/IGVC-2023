@@ -10,7 +10,7 @@ def degToRad(angle):
 class GPS:
     def __init__(self, comPort, waypointLatitude, waypointLongitude):
         self.SerialObj = serial.Serial(comPort) # COMxx  format on Windows, ttyUSBx format on Linux
-        self.SerialObj.baudrate = 9600  # set Baud rate to 9600
+        self.SerialObj.baudrate = 112500  # set Baud rate to 9600
         self.SerialObj.bytesize = 8   # Number of data bits = 8
         self.SerialObj.parity  ='N'   # No parity
         self.SerialObj.stopbits = 1   # Number of Stop bits = 1
@@ -57,10 +57,6 @@ class GPS:
             if ("SOL_COMPUTED" in SerialString):
                 self.currentLocation["latitude"] = float(SerialStringList[3])
                 self.currentLocation["longitude"] = float(SerialStringList[4])
-                self.validPosition = True
-            else:
-                self.currentLocation["latitude"] = 40
-                self.currentLocation["longitude"] = -80
                 self.validPosition = True
 
     def closeGPS(self):
