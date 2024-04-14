@@ -101,11 +101,11 @@ def roi(img):
     if img is not None:
         x = int(img.shape[1])
         y = int(img.shape[0])
-        shape = np.array([[int(0), int(y)], [int(x), int(y)], [int(x), int(0.6*y)], [int(0), int(0.6*y)]])
+        shape = np.array([[int(0), int(y-100)], [int(x), int(y-100)], [int(0.55*x), int(0.6*y)], [int(0.45*x), int(0.6*y)]])
 
         mask = np.zeros_like(img)
 
-        #Uses 3 channels or 1 channel for color depending on input image
+        #Uses 3 channels or 1 channel for color depending on input imageq
         if len(img.shape) > 2:
             channel_count = img.shape[2]
             ignore_mask_color = (255,) * channel_count
@@ -132,9 +132,10 @@ def canny(img):
 
 
 rightSlope, leftSlope, rightIntercept, leftIntercept = [],[],[],[]
-prevRightSlope, prevLeftSlope = 0 
+prevRightSlope = 0
+prevLeftSlope = 0
 def draw_lines(img, lines):
-    global rightSlope, leftSlope, rightIntercept, leftIntercept
+    global rightSlope, leftSlope, rightIntercept, leftIntercept, prevRightSlope, prevLeftSlope
 
     rightColor=[0,255,0]
     leftColor=[255,0,0]
@@ -169,6 +170,18 @@ def draw_lines(img, lines):
     
     rightavgSlope = np.mean(rightSlope[-30:])
     rightavgIntercept = np.mean(rightIntercept[-30:])
+
+    """
+    if (time.time_ns() > lastCommandTime + (ONE_SECOND_DELAY*0.1)):
+        if prevLeftSlope == leftavgSlope:
+            print("stop")
+            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
+        elif prevRightSlope == rightavgSlope:
+            print("stop")
+            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
+        """
+    
+    #plotting the lines
     
     left_line_x1 = None 
     right_line_x1 = None
@@ -197,10 +210,6 @@ def draw_lines(img, lines):
 
             cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
             return [float("nan"), right_line_x1, float("nan"), rightavgSlope]
-        
-        if rightavgSlope == 0 and leftavgSlope == 0: 
-            return [0, 0, leftavgSlope, rightavgSlope]
-
         left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
         left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
     
@@ -212,8 +221,8 @@ def draw_lines(img, lines):
         cv2.fillPoly(img,[pts],(0,0,255))      
         
         
-        cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 10)
-        cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
+        cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 20)
+        cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 20)
     except ValueError:
             #I keep getting errors for some reason, so I put this here. Idk if the error still persists.
         pass
@@ -251,7 +260,9 @@ def processImage(image):
     
     filterimg = color_filter(interest)
 
-    canny = cv2.Canny(grayscale(filterimg), 50, 120)
+    blur = cv2.GaussianBlur(grayscale(filterimg), (5,5),0)
+
+    canny = cv2.Canny(blur, 50, 120)
 
     myline = hough_lines(canny, 1, np.pi/180, 10, 20, 5)
 
@@ -311,7 +322,7 @@ def findCoordinatesOfObstacles(zed, lineImg):
     CENTER_PIXEL_HORIZ = (leftImage.get_width() / 2)
 
     OBSTACLE_THRESHOLD = 400
-    PIXEL_REDUCTION_COEFFICIENT = 8
+    PIXEL_REDUCTION_COEFFICIENT = 20
 
     # Use step distance of PIXEL_REDUCTION_COEFFICIENT to reduce the number of pixels that have to be checked
     for j in range(int(leftImage.get_height()/2), int(leftImage.get_height()), PIXEL_REDUCTION_COEFFICIENT):
@@ -345,7 +356,7 @@ def findCoordinatesOfObstacles(zed, lineImg):
 
     centerY = int(leftImage.get_height() / 2)
     #for currentX in range(leftImage.get_width()):
-    for currentX in range(0, leftImage.get_width(), 4):
+    for currentX in range(0, leftImage.get_width(), 8):
         error, currentDepth = leftDepthMatrix.get_value(currentX, centerY)
 
         if not (math.isnan(currentDepth) or math.isinf(currentDepth)): # depth value is nan when the distance is too far away
@@ -423,7 +434,7 @@ def comparePathToObstacles(coordinateList):
 # Perform all autonomous navigation checks
 # Returns the direction the robot should move according to the object detection and line detection
 # Should only return "up", "left", or "right"
-def runAutonomousControls(zed, lastCommandTime):
+def runAutonomousControls(zed):
     #depthSensorDirection = runDepthSensor(zed) # Finds the best course of action according to the depth sensor
 
     # Get the image from the zed camera
@@ -459,9 +470,9 @@ def runAutonomousControls(zed, lastCommandTime):
 #----------------------------------------------------------------------
 # Setting up usb connections
 #----------------------------------------------------------------------
-motors = MotorController('COM4')
+motors = MotorController('COM5')
 
-BluetoothSerialObj = serial.Serial('COM3') # COMxx  format on Windows
+BluetoothSerialObj = serial.Serial('COM4') # COMxx  format on Windows
                   # ttyUSBx format on Linux
 BluetoothSerialObj.baudrate = 9600  # set Baud rate to 9600
 BluetoothSerialObj.bytesize = 8   # Number of data bits = 8
@@ -538,18 +549,29 @@ while True:
 
     window.fill((255, 255, 255))
     pygame.draw.circle(window, (0,0,0), coordinateTransform(0, 0), 20) #Draw a black circle representing the robot in the overhead view
+    pygame.draw.line(window, (0,0,0), coordinateTransform(0, 0), coordinateTransform(0, 600), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(100, 0), coordinateTransform(100, 600), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(200, 0), coordinateTransform(200, 600), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(-100, 0), coordinateTransform(-100, 600), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(-200, 0), coordinateTransform(-200, 600), width=2)
 
-    # Always be collecting data for autonomous controls
-    leftSpeed, rightSpeed = runAutonomousControls(zed, timeOfLastCommand)
+    #Add horizontal grid lines
+    pygame.draw.line(window, (0,0,0), coordinateTransform(-300, 100), coordinateTransform(300, 100), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(-300, 200), coordinateTransform(300, 200), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(-300, 300), coordinateTransform(300, 300), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(-300, 400), coordinateTransform(300, 400), width=2)
+    pygame.draw.line(window, (0,0,0), coordinateTransform(-300, 500), coordinateTransform(300, 500), width=2)
 
-    pygame.display.update() #Update the overhead view
 
     # if the robot is in autonomous mode, set the current command to the best course of action according to the autonomous control logic
     if (doAutonomous):
+        leftSpeed, rightSpeed = runAutonomousControls(zed)
         timeOfLastCommand = sendMotorCommand(motors, "custom", timeOfLastCommand, leftSpeed, rightSpeed)
     else:
         # send the next course of action to the motors based on manual controls
         timeOfLastCommand = sendMotorCommand(motors, currentCommand, timeOfLastCommand)
+
+    pygame.display.update() #Update the overhead view
 
 
     #TODO: add logic to check if the robot is near the destination waypoint
