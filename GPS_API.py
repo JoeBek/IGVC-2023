@@ -30,6 +30,12 @@ class GPS:
         time.sleep(0.25)
         self.SerialObj.write(b"log bestpos ontime 2\r\n")
 
+    def updateWaypoint(self, newLatitude, newLongitude):
+        self.destinationLocation = {
+            "latitude" : newLatitude,
+            "longitude" : newLongitude
+        }
+
     def findCompassBearing(self):
         if not(self.currentLocation["latitude"] == None):            
             Yval = math.sin(degToRad(self.destinationLocation["longitude"] - self.currentLocation["longitude"])) * math.cos(degToRad(self.destinationLocation["latitude"]))
