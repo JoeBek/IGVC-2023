@@ -433,6 +433,12 @@ def runAutonomousControls(zed):
 
     if (desiredAngle == 0): # If no path forward can be found, stop the robot
         return (0,0)
+    
+    desiredAngle_rad = desiredAngle * math.pi/180
+    
+    ypos = 400
+    xpos = ypos * math.tan(desiredAngle_rad)
+    pygame.draw.line(window, (0,0,255), coordinateTransform(0,0), coordinateTransform(xpos, ypos), ROBOT_WIDTH)
 
     # Constant representing the desired travel angle at which the inside wheel will stop while the outside wheel moves at double speed
     STOP_ANGLE = 55
@@ -465,7 +471,7 @@ init_params.camera_resolution = sl.RESOLUTION.HD720
 init_params.camera_fps = 30
 error = zed.open(init_params)
 
-gps = GPS("COM8", WAYPOINT_LATITUDE, WAYPOINT_LONGITUDE)
+gps = GPS("COM9", WAYPOINT_LATITUDE, WAYPOINT_LONGITUDE)
 
 #----------------------------------------------------------------------
 # Setting up overhead view
