@@ -80,7 +80,6 @@ def sendMotorCommand(motorObj, command, lastCommandTime, leftSpeed=0, rightSpeed
 #--------------------------------------------------------------
 
     
-#display_images(imageList)
 
 
 def color_filter(image):
@@ -157,9 +156,7 @@ def draw_lines(img, lines):
                         yintercept = y2 - (slope*x2)                    
                         leftSlope.append(slope)
                         leftIntercept.append(yintercept)    
-        #print("works")
     else:
-        #print("was None")
         hello = 0
                     
                     
@@ -170,16 +167,6 @@ def draw_lines(img, lines):
     
     rightavgSlope = np.mean(rightSlope[-30:])
     rightavgIntercept = np.mean(rightIntercept[-30:])
-
-    """
-    if (time.time_ns() > lastCommandTime + (ONE_SECOND_DELAY*0.1)):
-        if prevLeftSlope == leftavgSlope:
-            print("stop")
-            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
-        elif prevRightSlope == rightavgSlope:
-            print("stop")
-            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
-        """
     
     #plotting the lines
     
@@ -187,6 +174,7 @@ def draw_lines(img, lines):
     right_line_x1 = None
     #plotting the lines
     try:
+        #if right line does not exist
         if math.isnan(rightavgSlope):
        #draw left line and everything to the right
             left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
@@ -199,6 +187,7 @@ def draw_lines(img, lines):
             cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 10)
             return [left_line_x1, float("nan"), leftavgSlope, float("nan")]
 
+        #if left line does not exist
         if math.isnan(leftavgSlope):
         #draw right line and everything to the left
             right_line_x1 = int((0.65*img.shape[0] - rightavgIntercept)/rightavgSlope)
@@ -210,6 +199,8 @@ def draw_lines(img, lines):
 
             cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
             return [float("nan"), right_line_x1, float("nan"), rightavgSlope]
+        
+        #both lines exist
         left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
         left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
     
@@ -239,17 +230,12 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
     coors = draw_lines(line_img, lines)
-    #line_img2 = cv2.circle(line_img, (coors[0], 400), radius=10, color=(255, 255, 255), thickness=-6)
-    #line_img2 = cv2.circle(line_img2, (coors[1], 400), radius=10, color=(255, 255, 255), thickness=-6)
     
     return line_img
 
 
 def linedetect(img):
     return hough_lines(img, 1, np.pi/180, 10, 20, 100).first
-
-#hough_img = list(map(linedetect, canny_img))
-#display_images(hough_img)
 
 def processImage(image):
     #rgbImg = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
@@ -269,11 +255,6 @@ def processImage(image):
     weighted_img = cv2.addWeighted(myline, 1, rgbImg, 0.8, 0)
     
     #cv2.imshow("img", weighted_img)
-
-
-    ''' motorObj = MotorController('COM4')
-    initialTime = time.time_ns()
-    initialTime = sendMotorCommand(motorObj, command, initialTime)'''
     
     return weighted_img, myline
 
