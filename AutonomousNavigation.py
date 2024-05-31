@@ -17,9 +17,10 @@ from pygame.locals import *
 #Defining Important Constants
 DEPTH_VALUE = 300 # when objects are closer than DEPTH_VALUE, the robot will turn to avoid them
 MAX_DEPTH = 400
-ROBOT_SPEED = 20
+ROBOT_SPEED = 50
 ONE_SECOND_DELAY = 1000000000
-ROBOT_WIDTH = 70 #Horizontal width of robot in cm
+ROBOT_WIDTH = 100 #Horizontal width of robot in cm
+
 
 WAYPOINT_LATITUDE = 37.228889
 WAYPOINT_LONGITUDE = -80.4155556
