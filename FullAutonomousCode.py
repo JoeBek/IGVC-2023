@@ -1,4 +1,4 @@
-# Python code transmits a byte to Arduino /Microcontroller
+ # Python code transmits a byte to Arduino /Microcontroller
 import serial
 import time
 import pyzed.sl as sl

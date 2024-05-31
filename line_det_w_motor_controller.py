@@ -7,14 +7,14 @@ import cv2
 import time
 #%matplotlib inline
 from moviepy.editor import VideoFileClip
-from IPython.display import HTML
+#from IPython.display import HTML
 from MotorControlAPI import MotorController 
 
 
 ROBOT_SPEED = 20
 ONE_SECOND_DELAY = 1000000000
 #myVar = MotorController('COMx')
-motorObj = MotorController('COM4')
+#motorObj = MotorController('COM4')
 
 #print(imageFiles)
 
@@ -85,12 +85,12 @@ def grayscale(img):
 
 def canny(img):
     #using canny to get edges
-    return cv2.Canny(grayscale(img), 50, 120)
+    return cv2.Canny(grayscale(img), 100, 150)
 
 #canny_img = list(map(canny, roi_img))
 #display_images(canny_img,cmap='gray')
 
-rightSlope, leftSlope, rightIntercept, leftIntercept = [],[],[],[]
+'''rightSlope, leftSlope, rightIntercept, leftIntercept = [],[],[],[]
 def draw_lines(img, lines, thickness=5):
     global rightSlope, leftSlope, rightIntercept, leftIntercept
 
@@ -149,6 +149,102 @@ def draw_lines(img, lines, thickness=5):
             #I keep getting errors for some reason, so I put this here. Idk if the error still persists.
         pass
 
+    return [left_line_x1, right_line_x1]'''
+
+rightSlope, leftSlope, rightIntercept, leftIntercept = [],[],[],[]
+def draw_lines(img, lines, thickness=5):
+    global rightSlope, leftSlope, rightIntercept, leftIntercept, prevRightSlope, prevLeftSlope
+
+    rightColor=[0,255,0]
+    leftColor=[255,0,0]
+    
+    #this is used to filter out the outlying lines that can affect the average
+    #We then use the slope we determined to find the y-intercept of the filtered lines by solving for b in y=mx+b
+    if lines is not None: 
+        for line in lines:
+            for x1,y1,x2,y2 in line:
+                slope = (y1-y2)/(x1-x2)
+                if slope > 0.3:
+                    if x1 > 500 :
+                        yintercept = y2 - (slope*x2)                    
+                        rightSlope.append(slope)
+                        rightIntercept.append(yintercept)
+                    else: None                
+                elif slope < -0.3:
+                    if x1 < 600:
+                        yintercept = y2 - (slope*x2)                    
+                        leftSlope.append(slope)
+                        leftIntercept.append(yintercept)    
+        #print("works")
+    else:
+        #print("was None")
+        hello = 0
+                    
+                    
+    #We use slicing operators and np.mean() to find the averages of the 30 previous frames
+    #This makes the lines more stable, and less likely to glitch
+    leftavgSlope = np.mean(leftSlope[-30:])
+    leftavgIntercept = np.mean(leftIntercept[-30:])
+    
+    rightavgSlope = np.mean(rightSlope[-30:])
+    rightavgIntercept = np.mean(rightIntercept[-30:])
+
+    """
+    if (time.time_ns() > lastCommandTime + (ONE_SECOND_DELAY*0.1)):
+        if prevLeftSlope == leftavgSlope:
+            print("stop")
+            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
+        elif prevRightSlope == rightavgSlope:
+            print("stop")
+            return [left_line_x1, right_line_x1, leftavgSlope, rightavgSlope]
+        """
+    
+    #plotting the lines
+    
+    left_line_x1 = None 
+    right_line_x1 = None
+    #plotting the lines
+    try:
+        if math.isnan(rightavgSlope):
+       #draw left line and everything to the right
+            left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
+            left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
+
+            pts = np.array([[left_line_x1, int(0.65*img.shape[0])],[left_line_x2, int(img.shape[0])],[int(img.shape[1]), int(img.shape[0])],[int(img.shape[1]), int(0.5*img.shape[1])]], np.int32)
+            pts = pts.reshape((-1,1,2))
+            cv2.fillPoly(img,[pts],(0,0,255))  
+
+            cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 10)
+            return [left_line_x1, float("nan"), leftavgSlope, float("nan")]
+
+        if math.isnan(leftavgSlope):
+        #draw right line and everything to the left
+            right_line_x1 = int((0.65*img.shape[0] - rightavgIntercept)/rightavgSlope)
+            right_line_x2 = int((img.shape[0] - rightavgIntercept)/rightavgSlope)
+
+            pts = np.array([[15, int(0.65*img.shape[0])],[0, int(img.shape[0])],[right_line_x2, int(img.shape[0])],[right_line_x1, int(0.65*img.shape[0])]], np.int32)
+            pts = pts.reshape((-1,1,2))
+            cv2.fillPoly(img,[pts],(0,0,255)) 
+
+            cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
+            return [float("nan"), right_line_x1, float("nan"), rightavgSlope]
+        left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
+        left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
+    
+        right_line_x1 = int((0.65*img.shape[0] - rightavgIntercept)/rightavgSlope)
+        right_line_x2 = int((img.shape[0] - rightavgIntercept)/rightavgSlope)
+
+        pts = np.array([[left_line_x1, int(0.65*img.shape[0])],[left_line_x2, int(img.shape[0])],[right_line_x2, int(img.shape[0])],[right_line_x1, int(0.65*img.shape[0])]], np.int32)
+        pts = pts.reshape((-1,1,2))
+        cv2.fillPoly(img,[pts],(0,0,255))      
+        
+        
+        cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 20)
+        cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 20)
+    except ValueError:
+            #I keep getting errors for some reason, so I put this here. Idk if the error still persists.
+        pass
+
     return [left_line_x1, right_line_x1]
     
     
@@ -192,8 +288,8 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
             print("stay straight")
             #myVar.forward(20)'''
     # motorObj = MotorController('COM4')
-    initialTime = time.time_ns()
-    initialTime = sendMotorCommand(motorObj, direction, initialTime)
+    #initialTime = time.time_ns()
+    #initialTime = sendMotorCommand(motorObj, direction, initialTime)
     
     return line_img
 
@@ -209,11 +305,12 @@ def processImage(image):
     interest = roi(image)
     
     filterimg = color_filter(interest)
-    canny = cv2.Canny(grayscale(filterimg), 50, 120)
+    blur = cv2.GaussianBlur(grayscale(filterimg), (5,5),0)
+    canny = cv2.Canny(blur, 100, 150)
     myline = hough_lines(canny, 1, np.pi/180, 10, 20, 5)
     
     weighted_img = cv2.addWeighted(myline, 1, image, 0.8, 0)
-    cv2.imshow("img", weighted_img)
+    cv2.imshow("img", canny)
 
 
     ''' motorObj = MotorController('COM4')
@@ -246,7 +343,7 @@ def sendMotorCommand(motorObj, command, lastCommandTime):
 cap = cv2.VideoCapture(0) #use cv2.VideoCapture(0) to access camera
 while(cap.isOpened()):
      _, frame = cap.read()
-     final = processImage(frame)
+     final = processImage(frame[:, 0:650])
      #print("hello")
      #cv2.imshow("final", final)
      if cv2.waitKey(1) & 0xFF == ord('q'):
