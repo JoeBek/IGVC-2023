@@ -474,6 +474,69 @@ def runAutonomousControls(zed):
 
     return (leftSpeed, rightSpeed)
 
+def update_gps(gps:GPS):
+    gps.updatePosition()
+    coords = (gps.currentLocation["longitude"], gps.currentLocation["latitude"])
+    cart = gps.get_diff(coords)
+    return cart[0], cart[1]
+
+
+def printGPSstat(gps:GPS):
+    
+    coords = (gps.currentLocation["latitude"], gps.currentLocation["longitude"])
+    
+    print("gps coords: ", gps.gps_to_ecef(coords))
+    print("gps diff: ", gps.get_diff(coords))
+    
+    
+def gpsMode(gps:GPS, motors:MotorController):
+    
+    # starting at 42.668016, -83.218338
+    
+    # write logic to turn toward waypoint, then move toward waypoint, navigating 
+    # as we go
+    
+    
+    
+    # TODO turn left 90 degrees
+    
+    move(3, "left")
+    
+    x, y = update_gps(gps)
+    speed = 20
+    
+    
+    
+    t = 5
+    arrived = lambda : True if (abs(x) < 2.0) & (abs(y) < 2.0) else False
+    while (~arrived()):
+        
+        motors.forward(speed)
+        x,y = update_gps(gps)
+        
+        while (y > t):
+            move(.5, "right")
+            move(1, "forward")
+            x, y = update_gps()
+            
+        while (y < -t):
+            move(.5, "left")
+            move(1, "forward")
+            x, y = update_gps()
+
+
+    motors.stop()
+    
+
+def move(seconds, direction:str):
+    start = time.time()
+    lastcommand = start
+    while (time.time() - start < seconds):
+        lastcommand = sendMotorCommand(motors, direction, lastcommand)
+
+        
+
+
 
 #----------------------------------------------------------------------
 # Setting up usb connections
