@@ -17,10 +17,9 @@ from pygame.locals import *
 #Defining Important Constants
 DEPTH_VALUE = 300 # when objects are closer than DEPTH_VALUE, the robot will turn to avoid them
 MAX_DEPTH = 400
-ROBOT_SPEED = 50
+ROBOT_SPEED = 20
 ONE_SECOND_DELAY = 1000000000
 ROBOT_WIDTH = 100 #Horizontal width of robot in cm
-
 
 WAYPOINT_LATITUDE = 37.228889
 WAYPOINT_LONGITUDE = -80.4155556
@@ -269,7 +268,7 @@ def processImage(image):
 
     weighted_img = cv2.addWeighted(myline, 1, rgbImg, 0.8, 0)
     
-    cv2.imshow("img", weighted_img)
+    #cv2.imshow("img", weighted_img)
 
 
     ''' motorObj = MotorController('COM4')
@@ -403,7 +402,7 @@ def comparePathToObstacles(coordinateList):
         slope = 1/math.tan(angle_radians)
         a = -1.000 * slope
 
-        minDistanceRight = 10000
+        minDistanceRight = 5000 #10000
         for coord in coordinateList:
             distance = abs(a * coord[0] + coord[1])/math.sqrt(a*a + 1)
             if (distance < minDistanceRight):
@@ -413,7 +412,7 @@ def comparePathToObstacles(coordinateList):
 
         a = 1.000 * slope
 
-        minDistanceLeft = 10000
+        minDistanceLeft = 5000 #10000
         for coord in coordinateList:
             distance = abs(a * coord[0] + coord[1])/math.sqrt(a*a + 1)
             if (distance < minDistanceLeft):
@@ -447,7 +446,7 @@ def runAutonomousControls(zed):
     frame = leftImage1.get_data()
     final, lineImg = processImage(frame)  # process the current image and color the lines in a solid color
 
-    #cv2.imshow("img", final)
+    cv2.imshow("img", final)
 
     # Finds the overhead x,y coordinates of all obstacles and lines
     coordinateList = findCoordinatesOfObstacles(zed, lineImg)
@@ -465,71 +464,15 @@ def runAutonomousControls(zed):
     leftSpeed = int(ROBOT_SPEED * (1 - (desiredAngle/STOP_ANGLE)))
     rightSpeed = int(ROBOT_SPEED * (1 + (desiredAngle/STOP_ANGLE)))
 
+    end_pos_y = 400
+
+    angle_radians =  desiredAngle * math.pi/180
+
+    end_pos_x = end_pos_y * math.tan(angle_radians)
+     
+    pygame.draw.line(window, (0,0,255), coordinateTransform(0, 0), coordinateTransform(end_pos_x, end_pos_y), width=ROBOT_WIDTH)
+
     return (leftSpeed, rightSpeed)
-
-
-
-def gpsMode(gps:GPS, motors:MotorController):
-    
-    # starting at 42.668016, -83.218338
-    
-    # write logic to turn toward waypoint, then move toward waypoint, navigating 
-    # as we go
-    
-    
-    # TODO turn left 90 degrees
-
-
-    
-    gps.updatePosition()
-    x = gps.findX()
-    y = gps.findY()
-    speed = 20
-
-    print (x, y)
-    if (x is None or y is None):
-        return
-    
-    t = 5
-    memory = []
-    arrived = lambda : True if (abs(x) < 2) and (abs(y) < 2) else False
-    while (~arrived()):
-        
-        motors.forward(speed)
-        gps.updatePosition()
-        x = gps.findX()
-        y = gps.findY()
-        
-        while (y > t):
-            
-            end = 1
-            start = time.time()
-            while (time.time() - start < end / 2):
-                motors.turnRight(speed)
-            start = time.time()
-            while (time.time() - start < end):
-                motors.forward(speed)
-            gps.updatePosition()
-            y = gps.findY()
-            
-            
-            
-        while (y < -t):
-            
-            
-            end = 1
-            start = time.time()
-            while (time.time() - start < end / 2):
-                motors.turnLeft(speed)
-            start = time.time()
-            while (time.time() - start < end):
-                motors.forward(speed)
-            gps.updatePosition()
-            y = gps.findY()
-
-
-    motors.stop()
-        
 
 
 #----------------------------------------------------------------------
@@ -583,28 +526,10 @@ currentCommand = "stop"
 # Boolean to keep track of whether the robot is in autonomous mode, starts in manual control mode
 doAutonomous = False
 
-WAYPOINT = (42.400465621, -83.130635756)
-
-GPSMODE = False
-    
-
-
-gps = GPS("COM8", WAYPOINT[0], WAYPOINT[1])
-
-
 #----------------------------------------------------------------------
 # Main loop
 #----------------------------------------------------------------------
 while True:
-    
-    
-
-    gps.updatePosition()
-    print("bearing", gps.findCompassBearing())
-    print("", gps.findWaypointDistance())
-    print("x", gps.findX())
-    print('y', gps.findY())
-        
 
     # Check for a bluetooth command
     if (BluetoothSerialObj.inWaiting() > 0):
@@ -632,6 +557,7 @@ while True:
 
     window.fill((255, 255, 255))
     pygame.draw.circle(window, (0,0,0), coordinateTransform(0, 0), 20) #Draw a black circle representing the robot in the overhead view
+    #drawing grid lines
     pygame.draw.line(window, (0,0,0), coordinateTransform(0, 0), coordinateTransform(0, 600), width=2)
     pygame.draw.line(window, (0,0,0), coordinateTransform(100, 0), coordinateTransform(100, 600), width=2)
     pygame.draw.line(window, (0,0,0), coordinateTransform(200, 0), coordinateTransform(200, 600), width=2)
