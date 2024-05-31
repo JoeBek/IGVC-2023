@@ -1,13 +1,7 @@
-import os
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import numpy as np
 import math
 import cv2
 import time
-#%matplotlib inline
-from moviepy.editor import VideoFileClip
-from IPython.display import HTML
 from MotorControlAPI import MotorController 
 
 
@@ -15,18 +9,6 @@ ROBOT_SPEED = 20
 ONE_SECOND_DELAY = 1000000000
 #myVar = MotorController('COMx')
 motorObj = MotorController('COM4')
-
-#print(imageFiles)
-
-def display_images(images, cmap=None):
-    plt.figure(figsize=(40,40))    
-    for i, image in enumerate(images):
-        plt.subplot(3,2,i+1)
-        plt.imshow(image, cmap)
-        plt.autoscale(tight=True)
-    plt.show()
-    
-#display_images(imageList)
 
 
 def color_filter(image):
@@ -43,11 +25,6 @@ def color_filter(image):
 
 
     return masked
-
-#filtered_img = list(map(color_filter, imageList))
-
-#display_images(filtered_img)
-
 
 def roi(img):
     #function to idenify region of interest, using a triangle to focus on where the lines are
@@ -74,11 +51,6 @@ def roi(img):
     else: 
         print("None")
 
-#roi_img = list(map(roi, filtered_img))
-
-#display_images(roi_img)
-
-
 def grayscale(img):
     #canny needs a gray image, so we convert
     return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -87,8 +59,6 @@ def canny(img):
     #using canny to get edges
     return cv2.Canny(grayscale(img), 50, 120)
 
-#canny_img = list(map(canny, roi_img))
-#display_images(canny_img,cmap='gray')
 
 rightSlope, leftSlope, rightIntercept, leftIntercept = [],[],[],[]
 def draw_lines(img, lines, thickness=5):
@@ -114,9 +84,7 @@ def draw_lines(img, lines, thickness=5):
                         yintercept = y2 - (slope*x2)                    
                         leftSlope.append(slope)
                         leftIntercept.append(yintercept)    
-        #print("works")
     else:
-        #print("was None")
         hello = 0
                     
                     
@@ -169,9 +137,6 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
         left_diff = int(coors[0])
         right_diff = 635-int(coors[1])
         padding = 20
-        #print("left: ", left_diff)
-        #print("right: ", right_diff)
-        # r = 400 
         if (right_diff -padding < left_diff) and (left_diff < right_diff + padding):
             print("stay straight")
             direction = "up"
@@ -181,17 +146,6 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
         elif (left_diff > right_diff + padding): 
             print("move right")
             direction = "right"
-
-        '''if (left_diff < right_diff - padding) or (left_diff > right_diff + padding): 
-            print("move right")
-            #myVar.turnRight(20)
-        elif (right_diff < left_diff - padding) or (right_diff > left_diff + padding): 
-            print("move left")
-            #myVar.turnLeft(20)
-        elif left_diff == right_diff: 
-            print("stay straight")
-            #myVar.forward(20)'''
-    # motorObj = MotorController('COM4')
     initialTime = time.time_ns()
     initialTime = sendMotorCommand(motorObj, direction, initialTime)
     
@@ -201,8 +155,6 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
 def linedetect(img):
     return hough_lines(img, 1, np.pi/180, 10, 20, 100).first
 
-#hough_img = list(map(linedetect, canny_img))
-#display_images(hough_img)
 
 def processImage(image):
     #function to combine all previous functions
@@ -247,7 +199,6 @@ cap = cv2.VideoCapture(0) #use cv2.VideoCapture(0) to access camera
 while(cap.isOpened()):
      _, frame = cap.read()
      final = processImage(frame)
-     #print("hello")
      #cv2.imshow("final", final)
      if cv2.waitKey(1) & 0xFF == ord('q'):
         break

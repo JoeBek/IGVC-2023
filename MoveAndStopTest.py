@@ -267,18 +267,71 @@ def moveForwardAndStopTest(motor, zed):
         counter = (counter + 1) % 10
 
 
+def moveForwardAndStopTestNoMultiprocessing(motor, zed):
+    # initialization for using sensor data
+    leftImage = sl.Mat()
+    leftDepthMatrix = sl.Mat()
+    runtimeParameters = sl.RuntimeParameters()
+
+    # keeps capturing depth images until obstacle detected
+    depthValue = None
+    x = int(leftImage.get_width() / 2)
+    y = int(leftImage.get_height() / 2)
+    speed = FORWARD_SPEED
+    lastTime = time.time()  # time when image was last captured
+    while depthValue is None or depthValue > MIN_THRESHOLD_DISTANCE_CM:
+        currTime = time.time()
+        TIME_DIFF = 0.001  # time difference (in sec) for updating depthValue
+        if currTime - lastTime > TIME_DIFF:
+            depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtimeParameters)
+            print("Sent move forward command with speed = {0}".format(speed))
+            lastTime = currTime
+        if motor is not None:
+            motor.forward(speed)
+
+        # checks that it is not just noise
+        if depthValue <= MIN_THRESHOLD_DISTANCE_CM:
+            CONFIRM_TIMES = 10  # number of times to confirm
+            countConfirm = 0
+            falseAlarm = False
+            while countConfirm < CONFIRM_TIMES or falseAlarm:
+                depthValue, x, y = captureImageAndCheckForObstacle(zed, leftImage, leftDepthMatrix, runtimeParameters)
+                if depthValue > MIN_THRESHOLD_DISTANCE_CM:
+                    falseAlarm = True
+                else:
+                    countConfirm += 1
+
+    # stops robot
+    if motor is not None:
+        motor.stop()
+
+    # continues to collect data after robot stops (to collect data on braking distance for competition design report)
+    collisionFlag = False
+    counter = 0  # used to periodically remind that robot is stopping in the output
+    while not collisionFlag:
+        depthValue = captureImageAndCheckForObstacle(zed, sl.Mat(), sl.Mat(), sl.RuntimeParameters())[0]
+        if depthValue <= 0 or counter == 0:
+            if depthValue > 0:
+                print("Robot stopping")
+            else:
+                print("Robot may have collided into obstacle")
+                collisionFlag = True
+        counter = (counter + 1) % 10
+
+
 # ======================================================================================================================
 
 
 if __name__ == "__main__":
     # initialization
     # motorForTest, zedForTest = initializationForTest()  # pass in com port as string literal to connect to motor
-    motorForTest, zedForTest = initializationForTest('COM4')
+    motorForTest, zedForTest = initializationForTest('COM5')
     PROGRAM_START_TIME_MS = MS_PER_SEC * int(time.time())
     print("Start time:", PROGRAM_START_TIME_MS)
 
-    moveForwardAndStopTest(motorForTest, zedForTest)  # on successful stop, press Ctrl+C to stop program
-
+    # moveForwardAndStopTest(motorForTest, zedForTest)  # on successful stop, press Ctrl+C to stop program
+    moveForwardAndStopTestNoMultiprocessing(motorForTest, zedForTest)
+    
     # cleanup
     if motorForTest is not None:
         motorForTest.shutDown()
