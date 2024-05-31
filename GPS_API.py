@@ -35,6 +35,24 @@ class GPS:
             "latitude" : newLatitude,
             "longitude" : newLongitude
         }
+        
+          
+    def findX(self):
+        if not(self.currentLocation["latitude"] == None): 
+            X = degToRad(self.destinationLocation["longitude"] - self.currentLocation["longitude"]) * math.cos(degToRad((self.currentLocation["latitude"] + self.destinationLocation["latitude"])/2))
+       
+            return X * 6371000
+        else:
+            return None
+        
+    def findY(self):
+        if not(self.currentLocation["latitude"] == None): 
+            Y = degToRad(self.destinationLocation["latitude"] - self.currentLocation["latitude"])
+            
+            return Y * 6371000
+        else:
+            return None
+        
 
     def findCompassBearing(self):
         if not(self.currentLocation["latitude"] == None):            
