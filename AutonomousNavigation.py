@@ -467,6 +467,66 @@ def runAutonomousControls(zed):
     return (leftSpeed, rightSpeed)
 
 
+
+def gpsMode(gps:GPS, motors:MotorController):
+    
+    # starting at 42.668016, -83.218338
+    
+    # write logic to turn toward waypoint, then move toward waypoint, navigating 
+    # as we go
+    
+    XD = 7100
+    YD = 29000
+    
+    # TODO turn left 90 degrees
+    
+    gps.updatePosition()
+    x:int = gps.findX() - XD
+    y:int = gps.findY() - YD
+    speed = 20
+    
+    t = 5
+    memory = []
+    arrived = lambda : True if (math.abs(x) < 2) & (math.abs(y) < 2) else False
+    while (~arrived()):
+        
+        motors.forward(speed)
+        gps.updatePosition()
+        x = gps.findX()
+        y = gps.findY()
+        
+        while (y > t):
+            
+            end = 1
+            start = time.time()
+            while (time.time() - start < end / 2):
+                motors.turnRight(speed)
+            start = time.time()
+            while (time.time() - start < end):
+                motors.forward(speed)
+            gps.updatePosition()
+            y = gps.findY()
+            
+            
+            
+        while (y < -t):
+            
+            
+            end = 1
+            start = time.time()
+            while (time.time() - start < end / 2):
+                motors.turnLeft(speed)
+            start = time.time()
+            while (time.time() - start < end):
+                motors.forward(speed)
+            gps.updatePosition()
+            y = gps.findY()
+
+
+    motors.stop()
+        
+
+
 #----------------------------------------------------------------------
 # Setting up usb connections
 #----------------------------------------------------------------------
@@ -518,10 +578,23 @@ currentCommand = "stop"
 # Boolean to keep track of whether the robot is in autonomous mode, starts in manual control mode
 doAutonomous = False
 
+WAYPOINT = (42.400465621, -83.130635756)
+
+GPSMODE = False
+    
+
+
+gps = GPS("COM9", WAYPOINT[0], WAYPOINT[1])
+
+
 #----------------------------------------------------------------------
 # Main loop
 #----------------------------------------------------------------------
 while True:
+    
+    if (GPSMODE):
+        gpsMode(gps,motors)
+        
 
     # Check for a bluetooth command
     if (BluetoothSerialObj.inWaiting() > 0):
