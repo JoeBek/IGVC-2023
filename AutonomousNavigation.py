@@ -497,7 +497,6 @@ def gpsMode(gps:GPS, motors:MotorController):
     # as we go
     
     
-    
     # TODO turn left 90 degrees
     
     move(3, "left")
@@ -507,20 +506,23 @@ def gpsMode(gps:GPS, motors:MotorController):
     
     
     
-    t = 5
-    arrived = lambda : True if (abs(x) < 2.0) & (abs(y) < 2.0) else False
+    tp = 2.5
+    tn = 1.2
+    ct = time.time()
+    arrived = lambda : True if (abs(x) < 3.0) and (abs(y) < 3.0) else False
     while (~arrived()):
         
-        motors.forward(speed)
+        ct = sendMotorCommand(motors, "forward", ct)
         x,y = update_gps(gps)
         
-        while (y > t):
-            move(.5, "right")
+        slope = -y / x
+        while (slope > tp):
+            move(.3, "right")
             move(1, "forward")
             x, y = update_gps()
             
-        while (y < -t):
-            move(.5, "left")
+        while (slope < tn):
+            move(.3, "left")
             move(1, "forward")
             x, y = update_gps()
 
@@ -589,10 +591,22 @@ currentCommand = "stop"
 # Boolean to keep track of whether the robot is in autonomous mode, starts in manual control mode
 doAutonomous = False
 
+gps = GPS('COM6',  42.668016, -83.218338)
+
+doGPS = False
+
 #----------------------------------------------------------------------
 # Main loop
 #----------------------------------------------------------------------
 while True:
+
+    
+    
+    if (doGPS):
+        while (gps.findWaypointDistance() is None):
+            gps.updatePosition()
+        gpsMode()
+        break
 
     # Check for a bluetooth command
     if (BluetoothSerialObj.inWaiting() > 0):
