@@ -538,6 +538,11 @@ def gpsMode(gps:GPS, motors:MotorController):
     # as we go
     
     
+<<<<<<< HEAD
+=======
+    # TODO turn left 90 degrees
+    
+>>>>>>> 7305da41a800957b140c3964b43cc8202c316d33
     move(3, "left")
     
     x, y = update_gps(gps)
@@ -577,6 +582,73 @@ def move(seconds, direction:str):
 
         
 
+# ---- 
+# IMU setup and API
+# ----
+
+def setupIMU(zed):
+    """
+    sets up the IMU to start tracking positional data
+    """
+    tracking_params = sl.PositionalTrackingParameters()
+    if (zed.enable_positional_tracking(tracking_params) != sl.ERROR_CODE.SUCCESS):
+        print("positional tracking error")
+        return
+    pose = sl.Pose()
+    return pose
+    
+
+def getIMU(zed, pose, sensor_data):
+    """
+    gets the IMU data as a quaternion
+    """
+    if (zed.grab() == sl.ERROR_CODE.SUCCESS):
+        
+        zed.get_position(pose, sl.REFERENCE_FRAME.WORLD)
+        zed.get_sensors_data(sensor_data, sl.TIME_REFERENCE.IMAGE)
+        
+        #extract IMU data
+        imu = sensor_data.get_imu_data()
+        
+        # get orientation
+        
+        orient = sl.Orientation()
+        imu.get_orientation(orient)
+        
+        ox = round(orient.get()[0], 3)
+        oy = round(orient.get()[1], 3)
+        oz = round(orient.get()[2], 3)
+        ow = round(orient.get()[3], 3)
+        
+        return ox, oy, oz, ow
+    
+
+@staticmethod
+def quaternion_to_yaw(x,y,z,w):
+    """
+    returns the yaw given a quaternion orientation
+    """
+    y2 = y ** 2
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (y2 + z ** 2)
+    yaw = math.atan2(t0, t1)
+    
+    return yaw
+
+def testyaw(zed, pose, sensor_data):
+    """
+    tests the yaw
+    """
+    
+    x,y,z,w = getIMU(zed, pose, sensor_data)
+    yaw = quaternion_to_yaw(x,y,z,w)
+    print("yaw: ", yaw)
+        
+        
+    
+    
+    
+
 
 
 #----------------------------------------------------------------------
@@ -598,13 +670,18 @@ init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
 init_params.coordinate_units = sl.UNIT.CENTIMETER
 init_params.camera_resolution = sl.RESOLUTION.HD720
 init_params.camera_fps = 30
+sensor_data = sl.SensorsData()
+pose = setupIMU(zed)
 error = zed.open(init_params)
 
+<<<<<<< HEAD
 zed.set_camera_settings(sl.VIDEO_SETTINGS.BRIGHTNESS, 1)
 
 zed.set_camera_settings(sl.VIDEO_SETTINGS.CONTRAST, 4)
 
 #zed.set_camera_settings(sl.VIDEO_SETTINGS.WHITE_BALANCE, 4600, True)
+=======
+>>>>>>> 7305da41a800957b140c3964b43cc8202c316d33
 
 #----------------------------------------------------------------------
 # Setting up overhead view
@@ -638,18 +715,25 @@ currentCommand = "stop"
 # Boolean to keep track of whether the robot is in autonomous mode, starts in manual control mode
 doAutonomous = False
 
+<<<<<<< HEAD
 WAYPOINT = (42.400465621,-83.130635756)
 
 '''gps =  GPS('COM6', WAYPOINT[0], WAYPOINT[1])
 gps.updatePosition()'''
 
 GPSMODE= False
+=======
+gps = GPS('COM6',  42.668016, -83.218338)
+
+doGPS = False
+>>>>>>> 7305da41a800957b140c3964b43cc8202c316d33
 
 #----------------------------------------------------------------------
 # Main loop
 #----------------------------------------------------------------------
 while True:
 
+<<<<<<< HEAD
     if (GPSMODE):
         while (gps.findWaypointDistance() is None):
             gps.updatePosition()
@@ -659,6 +743,15 @@ while True:
     
 
    
+=======
+    testyaw(zed, pose, sensor_data)
+    
+    if (doGPS):
+        while (gps.findWaypointDistance() is None):
+            gps.updatePosition()
+        gpsMode()
+        break
+>>>>>>> 7305da41a800957b140c3964b43cc8202c316d33
 
     # Check for a bluetooth command
     if (BluetoothSerialObj.inWaiting() > 0):
@@ -724,4 +817,7 @@ while True:
 # Shut down everything and close open ports
 motors.shutDown()
 BluetoothSerialObj.close()      # Close the port
+<<<<<<< HEAD
 gps.closeGPS()
+=======
+>>>>>>> 7305da41a800957b140c3964b43cc8202c316d33
