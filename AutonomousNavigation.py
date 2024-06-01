@@ -516,12 +516,12 @@ def gpsMode(gps:GPS, motors:MotorController):
         x,y = update_gps(gps)
         
         slope = -y / x
-        while (slope > tp):
+        while (slope > tp or ~arrived()):
             move(.3, "right")
             move(1, "forward")
             x, y = update_gps()
             
-        while (slope < tn):
+        while (slope < tn or ~arrived()):
             move(.3, "left")
             move(1, "forward")
             x, y = update_gps()
