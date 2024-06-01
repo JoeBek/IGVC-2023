@@ -498,7 +498,7 @@ def gpsMode(gps:GPS, motors:MotorController):
     
     
     # TODO turn left 90 degrees
-    
+    #test
     move(3, "left")
     
     x, y = update_gps(gps)
