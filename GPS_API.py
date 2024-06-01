@@ -41,10 +41,12 @@ class GPS:
             "longitude" : newLongitude
         }
         
-    @staticmethod 
+    
     def gps_to_ecef(self, coords): 
+        
         lat = coords[0] 
         long = coords[1] 
+        print(lat, long)
         lat_rad = math.radians(lat) 
         long_rad = math.radians(long) 
          
@@ -61,8 +63,8 @@ class GPS:
         waypoint = (self.destinationLocation["latitude"], self.destinationLocation["longitude"]) 
          
         #convert to x,y  
-        waypoint_cart = GPS.gps_to_ecef(waypoint) 
-        cart = GPS.gps_to_ecef(coords) 
+        waypoint_cart = self.gps_to_ecef(waypoint) 
+        cart = self.gps_to_ecef(coords) 
          
         # return difference in cartesian. This should return 0,0 if robot is on the waypoint. 
         return (waypoint_cart[0] - cart[0], waypoint_cart[1] - cart[1]) 

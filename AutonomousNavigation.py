@@ -19,7 +19,7 @@ DEPTH_VALUE = 300 # when objects are closer than DEPTH_VALUE, the robot will tur
 MAX_DEPTH = 400
 ROBOT_SPEED = 20
 ONE_SECOND_DELAY = 1000000000
-ROBOT_WIDTH = 100 #Horizontal width of robot in cm
+ROBOT_WIDTH = 80 #Horizontal width of robot in cm
 
 WAYPOINT_LATITUDE = 37.228889
 WAYPOINT_LONGITUDE = -80.4155556
@@ -268,7 +268,9 @@ def processImage(image):
 
     weighted_img = cv2.addWeighted(myline, 1, rgbImg, 0.8, 0)
     
-    #cv2.imshow("img", weighted_img)
+    cv2.imshow("canny", canny)
+
+    cv2.imshow("img", weighted_img)
 
 
     ''' motorObj = MotorController('COM4')
@@ -402,35 +404,60 @@ def comparePathToObstacles(coordinateList):
         slope = 1/math.tan(angle_radians)
         a = -1.000 * slope
 
-        minDistanceRight = 5000 #10000
+        minDistanceRight = float("inf") #10000
         for coord in coordinateList:
             distance = abs(a * coord[0] + coord[1])/math.sqrt(a*a + 1)
             if (distance < minDistanceRight):
                 minDistanceRight = distance
+               
 
         print("Min distance right: " + str(minDistanceRight))
 
         a = 1.000 * slope
 
-        minDistanceLeft = 5000 #10000
+        minDistanceLeft = float("inf") #10000
         for coord in coordinateList:
             distance = abs(a * coord[0] + coord[1])/math.sqrt(a*a + 1)
             if (distance < minDistanceLeft):
                 minDistanceLeft = distance
+               
         
-        angle += ANGLE_INCREMENT
+        #angle += ANGLE_INCREMENT
 
-    angle -= ANGLE_INCREMENT
+    #angle -= ANGLE_INCREMENT
 
-    if (angle > 54): # if a path cant be found go forward
-        return 0
+    #if (angle > 54): # if a path cant be found go forward
+        #return 0
 
     if (minDistanceRight > minDistanceLeft):
-        return angle
+        return -1*angle
     
-    
-    return -1 * angle
+    return angle
 
+
+
+def getDist(x,y):
+    return np.sqrt(x*x + y*y)
+def findPath2(coordinateList):
+    ANGLE_INCREMENT = 5
+    angle = 0 
+
+    minDist = 100
+
+
+    for coord in coordinateList:
+        distToObj = getDist(coord[0], coord[1])
+        if distToObj <= minDist:
+            angle += ANGLE_INCREMENT
+        if angle >55:
+            angle = 0 
+            if distToObj <= minDist:
+                angle -= ANGLE_INCREMENT
+    
+
+
+    
+    return angle 
 # Perform all autonomous navigation checks
 # Returns the direction the robot should move according to the object detection and line detection
 # Should only return "up", "left", or "right"
@@ -446,15 +473,22 @@ def runAutonomousControls(zed):
     frame = leftImage1.get_data()
     final, lineImg = processImage(frame)  # process the current image and color the lines in a solid color
 
-    cv2.imshow("img", final)
+    #cv2.imshow("img", canny)
 
     # Finds the overhead x,y coordinates of all obstacles and lines
     coordinateList = findCoordinatesOfObstacles(zed, lineImg)
 
+
     # Compare all obstacles points to current path
+
     desiredAngle = comparePathToObstacles(coordinateList)
 
-    if (desiredAngle == 0): # If no path forward can be found, stop the robot
+    #desiredAngle = findPath2(coordinateList)
+
+    #if (desiredAngle == 0): # If no path forward can be found, stop the robot
+        #return (0,0)
+    
+    if (desiredAngle > 54): # if a path cant be found go forward
         return (0,0)
 
     # Constant representing the desired travel angle at which the inside wheel will stop while the outside wheel moves at double speed
@@ -478,15 +512,22 @@ def update_gps(gps:GPS):
     gps.updatePosition()
     coords = (gps.currentLocation["longitude"], gps.currentLocation["latitude"])
     cart = gps.get_diff(coords)
-    return cart[0], cart[1]
+    return cart[0] -31322, cart[1] - 62619
 
 
 def printGPSstat(gps:GPS):
     
     coords = (gps.currentLocation["latitude"], gps.currentLocation["longitude"])
-    
+
+    print(gps.findWaypointDistance())
+
+
+    if (coords[0] is None or coords[1] is None):
+        return
     print("gps coords: ", gps.gps_to_ecef(coords))
     print("gps diff: ", gps.get_diff(coords))
+
+
     
     
 def gpsMode(gps:GPS, motors:MotorController):
@@ -497,9 +538,6 @@ def gpsMode(gps:GPS, motors:MotorController):
     # as we go
     
     
-    
-    # TODO turn left 90 degrees
-    
     move(3, "left")
     
     x, y = update_gps(gps)
@@ -507,20 +545,23 @@ def gpsMode(gps:GPS, motors:MotorController):
     
     
     
-    t = 5
-    arrived = lambda : True if (abs(x) < 2.0) & (abs(y) < 2.0) else False
+    tp = 2.5
+    tn = 1.2
+    ct = time.time()
+    arrived = lambda : True if (abs(x) < 3.0) and (abs(y) < 3.0) else False
     while (~arrived()):
         
-        motors.forward(speed)
+        ct = sendMotorCommand(motors, "forward", ct)
         x,y = update_gps(gps)
         
-        while (y > t):
-            move(.5, "right")
+        slope = -y / x
+        while (slope > tp or ~arrived()):
+            move(.3, "right")
             move(1, "forward")
             x, y = update_gps()
             
-        while (y < -t):
-            move(.5, "left")
+        while (slope < tn or ~arrived()):
+            move(.3, "left")
             move(1, "forward")
             x, y = update_gps()
 
@@ -559,6 +600,12 @@ init_params.camera_resolution = sl.RESOLUTION.HD720
 init_params.camera_fps = 30
 error = zed.open(init_params)
 
+zed.set_camera_settings(sl.VIDEO_SETTINGS.BRIGHTNESS, 1)
+
+zed.set_camera_settings(sl.VIDEO_SETTINGS.CONTRAST, 4)
+
+#zed.set_camera_settings(sl.VIDEO_SETTINGS.WHITE_BALANCE, 4600, True)
+
 #----------------------------------------------------------------------
 # Setting up overhead view
 #----------------------------------------------------------------------
@@ -575,6 +622,8 @@ window.fill((255, 255, 255))
 # Draws the surface object to the screen.
 pygame.display.update()
 
+
+
 #----------------------------------------------------------------------
 # Setup of important variables
 #----------------------------------------------------------------------
@@ -589,10 +638,27 @@ currentCommand = "stop"
 # Boolean to keep track of whether the robot is in autonomous mode, starts in manual control mode
 doAutonomous = False
 
+WAYPOINT = (42.400465621,-83.130635756)
+
+'''gps =  GPS('COM6', WAYPOINT[0], WAYPOINT[1])
+gps.updatePosition()'''
+
+GPSMODE= False
+
 #----------------------------------------------------------------------
 # Main loop
 #----------------------------------------------------------------------
 while True:
+
+    if (GPSMODE):
+        while (gps.findWaypointDistance() is None):
+            gps.updatePosition()
+        gpsMode(gps, motors)
+        break
+   
+    
+
+   
 
     # Check for a bluetooth command
     if (BluetoothSerialObj.inWaiting() > 0):
@@ -658,3 +724,4 @@ while True:
 # Shut down everything and close open ports
 motors.shutDown()
 BluetoothSerialObj.close()      # Close the port
+gps.closeGPS()
