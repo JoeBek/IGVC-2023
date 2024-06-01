@@ -173,9 +173,9 @@ class Process():
     def process(self):
         self.rgb()
         self.roi()
-        self.color_filtering(self.interest)
-        self.grayscale(self.filter)
-        self.blur(self.gray)
+        self.color_filtering(self.interestImg)
+        self.grayscale(self.filterImg)
+        self.blur(self.grayImg)
         self.canny(self.blurImg)
         self.hough_lines(self.cannyImg)
         self.weight(self.houghImg, self.rgbImg)
