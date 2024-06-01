@@ -8,6 +8,7 @@ import cv2
 import os
 from MotorControlAPI import MotorController
 from GPS_API import GPS
+from Process import Process
 
 # Importing pygame module
 import pygame
@@ -444,7 +445,9 @@ def runAutonomousControls(zed):
     zed.retrieve_image(leftImage1, sl.VIEW.LEFT)
 
     frame = leftImage1.get_data()
-    final, lineImg = processImage(frame)  # process the current image and color the lines in a solid color
+    prImg = Process(frame)
+    #final, lineImg = processImage(frame)  # process the current image and color the lines in a solid color
+    final, lineImg = prImg.process()
 
     cv2.imshow("img", final)
 

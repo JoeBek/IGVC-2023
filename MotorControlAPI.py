@@ -81,8 +81,8 @@ class MotorController:
         
         motorCommandString1 = "!G 1 "
         motorCommandString2 = "!G 2 "
-        #motorSpeedValue1 = int(5*speed)
-        motorSpeedValue1 = 0
+        motorSpeedValue1 = int(speed)
+        #motorSpeedValue1 = 0
         motorSpeedValue2 = int(10*speed)
         motorCommandString1 += str(motorSpeedValue1) + "\r"
         motorCommandString2 += str(motorSpeedValue2) + "\r"
@@ -98,8 +98,8 @@ class MotorController:
         motorCommandString1 = "!G 1 "
         motorCommandString2 = "!G 2 "
         motorSpeedValue1 = int(-10*speed)
-        #motorSpeedValue2 = int(-5*speed)
-        motorSpeedValue2 = 0
+        motorSpeedValue2 = int(-1*speed)
+        #motorSpeedValue2 = 0
         motorCommandString1 += str(motorSpeedValue1) + "\r"
         motorCommandString2 += str(motorSpeedValue2) + "\r"
         self.MotorSerialObj.write(bytes(motorCommandString1, 'utf-8'))
