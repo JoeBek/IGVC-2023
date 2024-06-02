@@ -475,10 +475,13 @@ def runAutonomousControls(zed):
     return (leftSpeed, rightSpeed)
 
 def update_gps(gps:GPS):
+    
+    waypoint_x = 31322
+    waypoint_y = 62619
     gps.updatePosition()
     coords = (gps.currentLocation["longitude"], gps.currentLocation["latitude"])
     cart = gps.get_diff(coords)
-    return cart[0] -31322, cart[1] - 62619
+    return cart[0] - waypoint_x, cart[1] - waypoint_y
 
 
 def printGPSstat(gps:GPS):
