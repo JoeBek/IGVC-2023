@@ -19,7 +19,7 @@ DEPTH_VALUE = 300 # when objects are closer than DEPTH_VALUE, the robot will tur
 MAX_DEPTH = 400
 ROBOT_SPEED = 20
 ONE_SECOND_DELAY = 1000000000
-ROBOT_WIDTH = 100 #Horizontal width of robot in cm
+ROBOT_WIDTH = 50 #Horizontal width of robot in cm
 
 WAYPOINT_LATITUDE = 37.228889
 WAYPOINT_LONGITUDE = -80.4155556
@@ -268,7 +268,9 @@ def processImage(image):
 
     weighted_img = cv2.addWeighted(myline, 1, rgbImg, 0.8, 0)
     
-    #cv2.imshow("img", weighted_img)
+    cv2.imshow("img",canny)
+    cv2.imshow("final",weighted_img)
+
 
 
     ''' motorObj = MotorController('COM4')
@@ -321,7 +323,7 @@ def findCoordinatesOfObstacles(zed, lineImg):
     HALF_FOV_DEGREES_HORIZ = 55
     CENTER_PIXEL_HORIZ = (leftImage.get_width() / 2)
 
-    OBSTACLE_THRESHOLD = 400
+    OBSTACLE_THRESHOLD = 500
     PIXEL_REDUCTION_COEFFICIENT = 20
 
     # Use step distance of PIXEL_REDUCTION_COEFFICIENT to reduce the number of pixels that have to be checked
@@ -446,7 +448,7 @@ def runAutonomousControls(zed):
     frame = leftImage1.get_data()
     final, lineImg = processImage(frame)  # process the current image and color the lines in a solid color
 
-    cv2.imshow("img", final)
+   # cv2.imshow("img", final)
 
     # Finds the overhead x,y coordinates of all obstacles and lines
     coordinateList = findCoordinatesOfObstacles(zed, lineImg)
@@ -591,7 +593,7 @@ currentCommand = "stop"
 # Boolean to keep track of whether the robot is in autonomous mode, starts in manual control mode
 doAutonomous = False
 
-gps = GPS('COM6',  42.668016, -83.218338)
+gps = GPS('COM8',  42.668016, -83.218338)
 
 doGPS = False
 
