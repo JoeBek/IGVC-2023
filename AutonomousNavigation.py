@@ -199,7 +199,7 @@ def draw_lines(img, lines):
             cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 10)
             return [left_line_x1, float("nan"), leftavgSlope, float("nan")]
 
-        if math.isnan(leftavgSlope):
+        '''if math.isnan(leftavgSlope):
         #draw right line and everything to the left
             right_line_x1 = int((0.65*img.shape[0] - rightavgIntercept)/rightavgSlope)
             right_line_x2 = int((img.shape[0] - rightavgIntercept)/rightavgSlope)
@@ -209,7 +209,7 @@ def draw_lines(img, lines):
             cv2.fillPoly(img,[pts],(0,0,255)) 
 
             cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 10)
-            return [float("nan"), right_line_x1, float("nan"), rightavgSlope]
+            return [float("nan"), right_line_x1, float("nan"), rightavgSlope]'''
         left_line_x1 = int((0.65*img.shape[0] - leftavgIntercept)/leftavgSlope)
         left_line_x2 = int((img.shape[0] - leftavgIntercept)/leftavgSlope)
     
@@ -222,7 +222,7 @@ def draw_lines(img, lines):
         
         
         cv2.line(img, (left_line_x1, int(0.65*img.shape[0])), (left_line_x2, int(img.shape[0])), leftColor, 20)
-        cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 20)
+        #cv2.line(img, (right_line_x1, int(0.65*img.shape[0])), (right_line_x2, int(img.shape[0])), rightColor, 20)
     except ValueError:
             #I keep getting errors for some reason, so I put this here. Idk if the error still persists.
         pass
