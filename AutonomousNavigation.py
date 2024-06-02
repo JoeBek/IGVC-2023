@@ -501,14 +501,6 @@ def distance(x,y):
     
 def gpsMode(gps:GPS, motors:MotorController):
     
-    # starting at 42.668016, -83.218338
-    
-    # write logic to turn toward waypoint, then move toward waypoint, navigating 
-    # as we go
-    
-    
-    # TODO turn left 90 degrees
-    
     
     x, y = update_gps(gps)
     speed = 20 # robot speed for 
@@ -532,8 +524,10 @@ def gpsMode(gps:GPS, motors:MotorController):
     arrived = lambda : True if (abs(x) < 3.0) and (abs(y) < 3.0) else False
     while (~arrived() and going_left):
         
+        # get new coordinates
         x,y = update_gps(gps)
         
+        # turn left
         last_command = sendMotorCommand(motors, 'left', last_command)
         
         # log distance and store
@@ -570,6 +564,10 @@ def gpsMode(gps:GPS, motors:MotorController):
             # reset timer
             t = time.time() + sampling_time
             
+            # reset samples 
+            distancesX.clear()
+            distancesY.clear()
+            
         if (theta < threshold):
             going_left = False
             
@@ -579,20 +577,9 @@ def gpsMode(gps:GPS, motors:MotorController):
         last_command = sendMotorCommand(motors, "forward", last_command)
             
             
-            
+    # stop the motors 
     motors.stop()
             
-                
-        
-        
-        
-        
-        
-    
-        
-
-
-    motors.stop()
     
 
 def move(seconds, direction:str):
