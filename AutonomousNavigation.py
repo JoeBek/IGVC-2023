@@ -456,10 +456,17 @@ def runAutonomousControls(zed):
 
     # Finds the overhead x,y coordinates of all obstacles and lines
     #coordinateList = findCoordinatesOfObstacles(zed, lineImg)
-    path.findCoordinatesOfObstacles(lineImg, zed)
+    path.init_matrices(zed)
+    path.findCoordinatesOfLines(lineImg)
+    path.findCoordinatesofObstacles()
+
+    for LineCoors in path.lineList:
+        pygame.draw.circle(window, (0,255,0), path.coordinateTransform(LineCoors[0], LineCoors[1]), 2) # Green dots indicate lines
+
+    for ObstacleCoors in path.obstacleList:
+        pygame.draw.circle(window, (255,0,0), path.coordinateTransform(ObstacleCoors[0], ObstacleCoors[1]), 2) # Red dots indicate obstacles
 
     # Compare all obstacles points to current path
-    #desiredAngle = comparePathToObstacles(coordinateList)
     desiredAngle = path.comparePathToObstacles()
 
     if (desiredAngle == 0): # If no path forward can be found, stop the robot
