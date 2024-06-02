@@ -478,16 +478,26 @@ def update_gps(gps:GPS):
     gps.updatePosition()
     coords = (gps.currentLocation["longitude"], gps.currentLocation["latitude"])
     cart = gps.get_diff(coords)
-    return cart[0], cart[1]
+    return cart[0] -31322, cart[1] - 62619
 
 
 def printGPSstat(gps:GPS):
     
     coords = (gps.currentLocation["latitude"], gps.currentLocation["longitude"])
     
-    print("gps coords: ", gps.gps_to_ecef(coords))
-    print("gps diff: ", gps.get_diff(coords))
+    '''print("gps coords: ", gps.gps_to_ecef(coords))
+    print("gps diff: ", gps.get_diff(coords))'''
     
+    x,y = update_gps(gps)
+    print("x: ", x)
+    print("y: ", y)
+    
+    
+def distance(x,y):
+    '''
+    distance function between two points
+    '''
+    return math.sqrt(x * x + y * y)
     
 def gpsMode(gps:GPS, motors:MotorController):
     
@@ -499,32 +509,87 @@ def gpsMode(gps:GPS, motors:MotorController):
     
     # TODO turn left 90 degrees
     
-    move(3, "left")
     
     x, y = update_gps(gps)
-    speed = 20
+    speed = 20 # robot speed for 
+    # alternating samples
+    distancesX = [] # sampling data structure for x points
+    distancesY = [] # sampling data structure for y points
+    sampling_time = 1 # sampling time between theta checks
+    threshold = .5 # Threshold for d theta (when should we go straight)
+    # start theta with a non-zero value
+    theta = 100
+    going_left = True # the initial state 
     
     
-    
-    tp = 2.5
-    tn = 1.2
-    ct = time.time()
+    # the idea is to sample distances for a sampling time, then take 
+    # respective medians to find consistent and time separated points along the arc.
+    # then, we take the arctan of the points with respect to the end point (0,0) to find the angle between
+    # the points. this is our theta. Once theta falls below a certain range, we assume we are straight. 
+    # once we are 'on course' we go straight until we find the waypoint.
+    t = time.time() + sampling_time
+    last_command = time.time()
     arrived = lambda : True if (abs(x) < 3.0) and (abs(y) < 3.0) else False
-    while (~arrived()):
+    while (~arrived() and going_left):
         
-        ct = sendMotorCommand(motors, "forward", ct)
         x,y = update_gps(gps)
         
-        slope = -y / x
-        while (slope > tp or ~arrived()):
-            move(.3, "right")
-            move(1, "forward")
-            x, y = update_gps()
+        last_command = sendMotorCommand(motors, 'left', last_command)
+        
+        # log distance and store
+        distancesX.append(x)
+        distancesY.append(y)
+        
+        # at time interval, begin the theta calculation
+        if (time.time() > t):
+            middle = len(distancesX) // 2
             
-        while (slope < tn or ~arrived()):
-            move(.3, "left")
-            move(1, "forward")
-            x, y = update_gps()
+            # first samples
+            first_half_X = distancesX[:middle]
+            first_half_Y = distancesY[:middle]
+            
+            # second samples
+            second_half_X = distancesX[middle:]
+            second_half_Y = distancesY[middle:]
+            
+            
+            first_point_x = np.median(first_half_X)
+            first_point_y = np.median(first_half_Y)
+            
+            second_point_x = np.median(second_half_X)
+            second_point_y = np.median(second_half_Y)
+            
+            # now we have our two distances from the 'origin' (waypoint)
+            
+            t1 = math.atan2(first_point_x, first_point_y)
+            t2 = math.atan2(second_point_x, second_point_y)
+            
+            # absolute d theta
+            theta = abs(t2 - t1)
+            
+            # reset timer
+            t = time.time() + sampling_time
+            
+        if (theta < threshold):
+            going_left = False
+            
+    
+    # now we go straight and pray
+    while (~arrived()):
+        last_command = sendMotorCommand(motors, "forward", last_command)
+            
+            
+            
+    motors.stop()
+            
+                
+        
+        
+        
+        
+        
+    
+        
 
 
     motors.stop()
@@ -605,7 +670,8 @@ while True:
     if (doGPS):
         while (gps.findWaypointDistance() is None):
             gps.updatePosition()
-        gpsMode()
+        #gpsMode()
+        printGPSstat()
         break
 
     # Check for a bluetooth command
