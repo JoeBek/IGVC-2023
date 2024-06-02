@@ -33,17 +33,17 @@ class Process():
 
             mask = np.zeros_like(self.image)
 
-        #Uses 3 channels or 1 channel for color depending on input imageq
+            #Uses 3 channels or 1 channel for color depending on input imageq
             if len(self.image.shape) > 2:
                 channel_count = self.image.shape[2]
                 ignore_mask_color = (255,) * channel_count
             else:
                 ignore_mask_color = 255
 
-        #creates a polygon with the mask color (for area between lines)
+            #creates a polygon with the mask color (for area between lines)
             cv2.fillPoly(mask, np.int32([shape]), ignore_mask_color)
 
-        #returns the image only where the mask pixels are not zero
+            #returns the image only where the mask pixels are not zero
             masked_image = cv2.bitwise_and(self.image, mask)
             self.interestImg = masked_image
         else: 
@@ -69,8 +69,8 @@ class Process():
     def canny(self, blurTerm):
         self.cannyImg = cv2.Canny(blurTerm, 100, 150)
 
+    # Function is not used
     def draw_lines(self, lineImg, lines):
-
         rightColor=[0,255,0]
         leftColor=[255,0,0]
     
@@ -102,8 +102,6 @@ class Process():
     
         rightavgSlope = np.mean(self.rightSlope[-30:])
         rightavgIntercept = np.mean(self.rightIntercept[-30:])
-
-        #plotting the lines
     
         left_line_x1 = None 
         right_line_x1 = None
