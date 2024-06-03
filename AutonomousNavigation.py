@@ -476,12 +476,20 @@ def runAutonomousControls(zed):
 
 def update_gps(gps:GPS):
     
-    waypoint_x = 31322
-    waypoint_y = 62619
+    
+    #waypoint_x = 31322
+    #waypoint_y = 62619
+    ffy = 83.21
+    ffx = 42.66
+    
+    scale = 1000000
     gps.updatePosition()
     coords = (gps.currentLocation["longitude"], gps.currentLocation["latitude"])
-    cart = gps.get_diff(coords)
-    return cart[0] - waypoint_x, cart[1] - waypoint_y
+    
+    x = round(((coords[0] - ffx) * scale), 0)
+    y = round(((coords[1] - ffy) * scale), 0)
+    #cart = gps.get_diff(coords)
+    return x, y
 
 
 def printGPSstat(gps:GPS):
@@ -506,15 +514,19 @@ def gpsMode(gps:GPS, motors:MotorController):
     
     
     x, y = update_gps(gps)
-    speed = 20 # robot speed for 
-    # alternating samples
+    
+    
     distancesX = [] # sampling data structure for x points
     distancesY = [] # sampling data structure for y points
-    sampling_time = 1 # sampling time between theta checks
-    threshold = .5 # Threshold for d theta (when should we go straight)
+    sampling_time = 2 # sampling time between theta checks
+    threshold = .3 # Threshold for d theta (when should we go straight)
     # start theta with a non-zero value
     theta = 100
     going_left = True # the initial state 
+    waypoint = (80855, 84730) # waypoint final coordinates
+    
+    readjusting = False # the final state
+   
     
     
     # the idea is to sample distances for a sampling time, then take 
@@ -524,14 +536,18 @@ def gpsMode(gps:GPS, motors:MotorController):
     # once we are 'on course' we go straight until we find the waypoint.
     t = time.time() + sampling_time
     last_command = time.time()
-    arrived = lambda : True if (abs(x) < 3.0) and (abs(y) < 3.0) else False
-    while (~arrived() and going_left):
+    arrived = lambda : True if (gps.findWaypointDistance() < 1.0) else False
+    while (~arrived()):
+        
         
         # get new coordinates
         x,y = update_gps(gps)
         
         # turn left
-        last_command = sendMotorCommand(motors, 'left', last_command)
+        if going_left:
+            last_command = sendMotorCommand(motors, 'left', last_command)
+        else:
+            last_command = sendMotorCommand(motors, 'up', last_command)
         
         # log distance and store
         distancesX.append(x)
@@ -571,21 +587,40 @@ def gpsMode(gps:GPS, motors:MotorController):
             distancesX.clear()
             distancesY.clear()
             
+            
+            # add logic for adjustment
+            
+            if (readjusting):
+                dx = second_point_x - first_point_x
+                dy = second_point_y - first_point_y
+                xd = waypoint[0] - second_point_x
+                yd = waypoint[1] - second_point_y
+                
+                readjustment_time = 1
+                
+                if (dy > dx):
+                    if (xd > yd):
+                        move(motors, readjustment_time, "right")
+                else:
+                    if (yd > xd):
+                        move(motors, readjustment_time, "left")
+                    
+            
+                
+            
+            
+        # transition point
         if (theta < threshold):
             going_left = False
-            
-    
-    # now we go straight and pray
-    while (~arrived()):
-        last_command = sendMotorCommand(motors, "forward", last_command)
-            
+            readjusting = True
+            sampling_time = 2
             
     # stop the motors 
     motors.stop()
             
     
 
-def move(seconds, direction:str):
+def move(motors:MotorController, seconds, direction:str):
     start = time.time()
     lastcommand = start
     while (time.time() - start < seconds):
@@ -660,7 +695,7 @@ while True:
     if (doGPS):
         while (gps.findWaypointDistance() is None):
             gps.updatePosition()
-        #gpsMode()
+        gpsMode()
         printGPSstat()
         break
 

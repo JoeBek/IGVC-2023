@@ -317,7 +317,53 @@ def processImage(image):
     initialTime = time.time_ns()
     initialTime = sendMotorCommand(motorObj, command, initialTime)'''
     
-    return weighted_img
+    return canny
+
+def get_canny_slope(canny, scale=1):
+    
+    
+    coords = []
+    
+    height, width = canny.shape
+    # go from the bottom of the image
+    for y in range(height - 1, -1, -20):
+        # once we have two coordinate pairs, assume a whole line
+        if len(coords) == 2:
+            break
+        # iterate over every pixel so we don't miss any white
+        for x in range (width):
+            if canny[y,x] == 0:
+                continue
+            else:
+                # bit detected. add i, j as coordinate
+                coords.append((x,y))
+                break
+            
+    # now we have two coordinate pairs.
+    
+    # because we go from the bottom left, if lower x < higher x, left line.
+    # else right line.
+    
+    # we can determine an approximate turn angle using relative x difference
+    
+    bottom = coords[0][0]
+    top = coords[1][0]
+    # we must figure out how to translate the top - bottom into an angle that can be turned.
+    angle = ((top - bottom) * scale)
+    
+    # top - bottom negative if we need to turn left
+    leftspeed = max(0, -angle)
+    rightspeed = (max(0, angle))
+    
+    return leftspeed, rightspeed
+    
+    
+            
+    
+                
+                
+                
+                
 
 def sendMotorCommand(motorObj, command, lastCommandTime):
     if (time.time_ns() > lastCommandTime + (ONE_SECOND_DELAY*0.1)):
