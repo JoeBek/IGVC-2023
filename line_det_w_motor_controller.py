@@ -319,11 +319,12 @@ def processImage(image):
     
     return canny
 
-def get_canny_slope(canny, scale=1):
+def get_canny_slope(canny, scale=1, acceptable_bits=6):
     
     
     coords = []
     
+    counter = 0 # number of white pixels in a row
     height, width = canny.shape
     # go from the bottom of the image
     for y in range(height - 1, -1, -20):
@@ -332,12 +333,17 @@ def get_canny_slope(canny, scale=1):
             break
         # iterate over every pixel so we don't miss any white
         for x in range (width):
+            # if black pixel
             if canny[y,x] == 0:
+                # reset counter :(
+                counter = 0
                 continue
             else:
                 # bit detected. add i, j as coordinate
-                coords.append((x,y))
-                break
+                counter += 1
+                if counter > acceptable_bits:
+                    coords.append((x,y))
+                    break
             
     # now we have two coordinate pairs.
     
