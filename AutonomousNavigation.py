@@ -519,13 +519,16 @@ def gpsMode(gps:GPS, motors:MotorController):
     distancesX = [] # sampling data structure for x points
     distancesY = [] # sampling data structure for y points
     sampling_time = 2 # sampling time between theta checks
-    threshold = .3 # Threshold for d theta (when should we go straight)
+    threshold = .1 # Threshold for d theta (when should we go straight)
     # start theta with a non-zero value
     theta = 100
     going_left = True # the initial state 
     waypoint = (80855, 84730) # waypoint final coordinates
     
     readjusting = False # the final state
+    
+    lx = 0 # last x
+    ly = 0 # last y
    
     
     
@@ -591,8 +594,8 @@ def gpsMode(gps:GPS, motors:MotorController):
             # add logic for adjustment
             
             if (readjusting):
-                dx = second_point_x - first_point_x
-                dy = second_point_y - first_point_y
+                dx = second_point_x - lx
+                dy = second_point_y - ly
                 xd = waypoint[0] - second_point_x
                 yd = waypoint[1] - second_point_y
                 
@@ -604,6 +607,9 @@ def gpsMode(gps:GPS, motors:MotorController):
                 else:
                     if (yd > xd):
                         move(motors, readjustment_time, "left")
+            
+            lx = second_point_x
+            ly = second_point_y
                     
             
                 
@@ -614,6 +620,8 @@ def gpsMode(gps:GPS, motors:MotorController):
             going_left = False
             readjusting = True
             sampling_time = 2
+        
+        
             
     # stop the motors 
     motors.stop()
